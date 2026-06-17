@@ -25,6 +25,7 @@ struct PathBar: View {
         pathBarContent
             .wrappedInGlassContainer()
             .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
         .animation(.smooth(duration: 0.2), value: isEditingPath)
         .onAppear {
             draftPath = currentURL.path
@@ -58,7 +59,8 @@ struct PathBar: View {
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
             Button {
                 beginEditing()
@@ -99,6 +101,8 @@ struct PathBar: View {
                 .textFieldStyle(.plain)
                 .focused($isPathFieldFocused)
                 .onSubmit(commitPath)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
 
             Button {
                 commitPath()

@@ -66,7 +66,7 @@ struct BrowserPane: View {
             )
         }
         .navigationTitle(navigationTitle)
-        .windowTitle(navigationTitle)
+        .windowTitle(navigationTitle, isVisible: !pathBarInTitleBar)
         .toolbar {
             toolbarContent
         }
@@ -168,13 +168,13 @@ struct BrowserPane: View {
             } label: {
                 Label("Up", systemImage: "chevron.up")
             }
+
+            if pathBarInTitleBar {
+                titleBarCenter
+            }
         }
 
-        if pathBarInTitleBar {
-            ToolbarItem(placement: .principal) {
-                titleBarPathBar
-            }
-        } else {
+        if !pathBarInTitleBar {
             ToolbarSpacer(.fixed)
         }
 
@@ -231,15 +231,32 @@ struct BrowserPane: View {
     }
 
     @ViewBuilder
-    private var titleBarPathBar: some View {
+    private var titleBarCenter: some View {
         #if os(macOS)
-        ExpandingToolbarView {
-            pathBar()
-                .frame(maxWidth: .infinity, alignment: .leading)
+        ExpandingToolbarView(preferredWidth: 10_000) {
+            HStack(spacing: 12) {
+                Text(navigationTitle)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .layoutPriority(0)
+
+                pathBar()
+                    .layoutPriority(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         #else
-        pathBar()
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(spacing: 12) {
+            Text(navigationTitle)
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            pathBar()
+                .layoutPriority(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         #endif
     }
 
@@ -370,9 +387,9 @@ struct TransferRequest: Identifiable {
 
 private extension View {
     @ViewBuilder
-    func windowTitle(_ title: String) -> some View {
+    func windowTitle(_ title: String, isVisible: Bool) -> some View {
         #if os(macOS)
-        background(WindowTitleWriter(title: title))
+        background(WindowTitleWriter(title: title, isVisible: isVisible))
         #else
         self
         #endif
@@ -382,30 +399,34 @@ private extension View {
 #if os(macOS)
 private struct ExpandingToolbarView<Content: View>: NSViewRepresentable {
     let content: Content
+    let preferredWidth: CGFloat
 
-    init(@ViewBuilder content: () -> Content) {
+    init(preferredWidth: CGFloat = 10_000, @ViewBuilder content: () -> Content) {
+        self.preferredWidth = preferredWidth
         self.content = content()
     }
 
     func makeNSView(context: Context) -> ExpandingToolbarContainer<Content> {
-        ExpandingToolbarContainer(rootView: content)
+        ExpandingToolbarContainer(rootView: content, preferredWidth: preferredWidth)
     }
 
     func updateNSView(_ nsView: ExpandingToolbarContainer<Content>, context: Context) {
-        nsView.update(rootView: content)
+        nsView.update(rootView: content, preferredWidth: preferredWidth)
     }
 }
 
 private final class ExpandingToolbarContainer<Content: View>: NSView {
     private let hostingView: NSHostingView<Content>
+    private var preferredWidth: CGFloat
 
     override var intrinsicContentSize: NSSize {
         let hostingSize = hostingView.intrinsicContentSize
-        return NSSize(width: NSView.noIntrinsicMetric, height: hostingSize.height)
+        return NSSize(width: preferredWidth, height: hostingSize.height)
     }
 
-    init(rootView: Content) {
+    init(rootView: Content, preferredWidth: CGFloat) {
         self.hostingView = NSHostingView(rootView: rootView)
+        self.preferredWidth = preferredWidth
         super.init(frame: .zero)
 
         setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -418,6 +439,7 @@ private final class ExpandingToolbarContainer<Content: View>: NSView {
         hostingView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         hostingView.setContentHuggingPriority(.required, for: .vertical)
         hostingView.setContentCompressionResistancePriority(.required, for: .vertical)
+        hostingView.sizingOptions = [.minSize, .intrinsicContentSize]
 
         addSubview(hostingView)
         NSLayoutConstraint.activate([
@@ -433,14 +455,16 @@ private final class ExpandingToolbarContainer<Content: View>: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func update(rootView: Content) {
+    func update(rootView: Content, preferredWidth: CGFloat) {
         hostingView.rootView = rootView
+        self.preferredWidth = preferredWidth
         invalidateIntrinsicContentSize()
     }
 }
 
 private struct WindowTitleWriter: NSViewRepresentable {
     let title: String
+    let isVisible: Bool
 
     func makeNSView(context: Context) -> NSView {
         NSView(frame: .zero)
@@ -456,8 +480,9 @@ private struct WindowTitleWriter: NSViewRepresentable {
                 window.title = title
             }
 
-            if window.titleVisibility != .visible {
-                window.titleVisibility = .visible
+            let nextVisibility: NSWindow.TitleVisibility = isVisible ? .visible : .hidden
+            if window.titleVisibility != nextVisibility {
+                window.titleVisibility = nextVisibility
             }
         }
     }
