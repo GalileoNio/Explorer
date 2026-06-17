@@ -14,15 +14,6 @@ public struct ExplorerRootView: View {
         } detail: {
             BrowserPane(controller: controller)
         }
-        .searchable(
-            text: Binding(
-                get: { controller.state.searchQuery },
-                set: { controller.setSearchQuery($0) }
-            ),
-            placement: .toolbar,
-            prompt: "Search current folder"
-        )
-        .searchToolbarBehavior(.automatic)
         .onAppear {
             controller.start()
         }
@@ -41,4 +32,3 @@ public struct ExplorerRootView: View {
         }
     }
 }
-

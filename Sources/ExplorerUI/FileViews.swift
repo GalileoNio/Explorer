@@ -2,6 +2,12 @@ import ExplorerCore
 import SwiftUI
 import UniformTypeIdentifiers
 
+#if os(macOS)
+import AppKit
+#elseif os(iOS)
+import UIKit
+#endif
+
 struct FileGridView: View {
     let items: [FileItem]
     let selectedURLs: Set<URL>
@@ -261,11 +267,36 @@ struct FileIconView: View {
     let size: CGFloat
 
     var body: some View {
+        platformIcon
+            .frame(width: size * 1.25, height: size * 1.25)
+    }
+
+    @ViewBuilder
+    private var platformIcon: some View {
+        #if os(macOS)
+        Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+        #elseif os(iOS)
+        if let icon = UIDocumentInteractionController(url: item.url).icons.last {
+            Image(uiImage: icon)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
+        } else {
+            fallbackIcon
+        }
+        #else
+        fallbackIcon
+        #endif
+    }
+
+    private var fallbackIcon: some View {
         Image(systemName: item.systemImageName)
             .font(.system(size: size, weight: .regular))
             .symbolRenderingMode(.hierarchical)
             .foregroundStyle(iconColor)
-            .frame(width: size * 1.25, height: size * 1.25)
     }
 
     private var iconColor: Color {
@@ -336,4 +367,3 @@ struct FileActionMenu: View {
         }
     }
 }
-

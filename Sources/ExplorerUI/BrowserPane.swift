@@ -8,6 +8,8 @@ struct BrowserPane: View {
     @State private var renameTarget: FileItem?
     @State private var pendingTransfer: TransferRequest?
     @State private var isChoosingDestination = false
+    @State private var isSearchExpanded = false
+    @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -133,47 +135,109 @@ struct BrowserPane: View {
         ToolbarSpacer(.fixed)
 
         ToolbarItemGroup(placement: .primaryAction) {
-            Picker("View", selection: Binding(
-                get: { controller.state.viewMode },
-                set: { controller.setViewMode($0) }
-            )) {
-                Label("Grid", systemImage: "square.grid.2x2").tag(FileViewMode.grid)
-                Label("List", systemImage: "list.bullet").tag(FileViewMode.list)
-            }
-            .pickerStyle(.segmented)
-            .controlSize(.small)
+            searchControl
 
             Menu {
-                sortButton("Name", key: .name)
-                sortButton("Kind", key: .kind)
-                sortButton("Size", key: .size)
-                sortButton("Modified", key: .modified)
-                Divider()
-                Toggle(
-                    "Folders First",
-                    isOn: Binding(
-                        get: { controller.state.sort.foldersFirst },
-                        set: { controller.setFoldersFirst($0) }
+                Picker("View", selection: Binding(
+                    get: { controller.state.viewMode },
+                    set: { controller.setViewMode($0) }
+                )) {
+                    Label("Grid", systemImage: "square.grid.2x2")
+                        .tag(FileViewMode.grid)
+                    Label("List", systemImage: "list.bullet")
+                        .tag(FileViewMode.list)
+                }
+
+                Section("Sort By") {
+                    sortButton("Name", key: .name)
+                    sortButton("Kind", key: .kind)
+                    sortButton("Size", key: .size)
+                    sortButton("Modified", key: .modified)
+                }
+
+                Section("Options") {
+                    Toggle(
+                        "Folders First",
+                        isOn: Binding(
+                            get: { controller.state.sort.foldersFirst },
+                            set: { controller.setFoldersFirst($0) }
+                        )
                     )
-                )
-                Toggle(
-                    "Show Hidden Files",
-                    isOn: Binding(
-                        get: { controller.state.showHiddenFiles },
-                        set: { controller.setShowHiddenFiles($0) }
+                    Toggle(
+                        "Show Hidden Files",
+                        isOn: Binding(
+                            get: { controller.state.showHiddenFiles },
+                            set: { controller.setShowHiddenFiles($0) }
+                        )
                     )
-                )
+                }
             } label: {
-                Label("Sort", systemImage: "arrow.up.arrow.down")
+                Label("View Options", systemImage: "slider.horizontal.3")
             }
+            .help("View Options")
 
             Button {
                 controller.createFolder()
             } label: {
                 Label("New Folder", systemImage: "folder.badge.plus")
             }
-            .buttonStyle(.glass)
+            .help("New Folder")
         }
+    }
+
+    @ViewBuilder
+    private var searchControl: some View {
+        HStack(spacing: isSearchExpanded ? 6 : 0) {
+            Button {
+                if isSearchExpanded {
+                    isSearchFieldFocused = true
+                } else {
+                    withAnimation(.smooth(duration: 0.22)) {
+                        isSearchExpanded = true
+                    }
+                    Task { @MainActor in
+                        await Task.yield()
+                        isSearchFieldFocused = true
+                    }
+                }
+            } label: {
+                Label("Search", systemImage: "magnifyingglass")
+            }
+            .labelStyle(.iconOnly)
+            .help("Search")
+
+            HStack(spacing: 6) {
+                TextField("Search current folder", text: Binding(
+                    get: { controller.state.searchQuery },
+                    set: { controller.setSearchQuery($0) }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 220)
+                .focused($isSearchFieldFocused)
+                .onSubmit {
+                    if controller.state.searchQuery.isEmpty {
+                        isSearchExpanded = false
+                    }
+                }
+
+                Button {
+                    controller.setSearchQuery("")
+                    isSearchFieldFocused = false
+                    withAnimation(.smooth(duration: 0.18)) {
+                        isSearchExpanded = false
+                    }
+                } label: {
+                    Label("Close Search", systemImage: "xmark")
+                }
+                .labelStyle(.iconOnly)
+                .help("Close Search")
+            }
+            .frame(width: isSearchExpanded ? 258 : 0, alignment: .leading)
+            .opacity(isSearchExpanded ? 1 : 0)
+            .clipped()
+            .allowsHitTesting(isSearchExpanded)
+        }
+        .animation(.smooth(duration: 0.22), value: isSearchExpanded)
     }
 
     private func sortButton(_ title: String, key: FileSortKey) -> some View {
@@ -245,4 +309,3 @@ struct TransferRequest: Identifiable {
     let operation: Operation
     let urls: [URL]
 }
-
