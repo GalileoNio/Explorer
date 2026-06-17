@@ -1,0 +1,773 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		200000000000000000000001 /* AuthorizedRootStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000001 /* AuthorizedRootStore.swift */; };
+		200000000000000000000002 /* DirectorySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000002 /* DirectorySnapshot.swift */; };
+		200000000000000000000003 /* ExplorerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000003 /* ExplorerController.swift */; };
+		200000000000000000000004 /* ExplorerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000004 /* ExplorerError.swift */; };
+		200000000000000000000005 /* ExplorerNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000005 /* ExplorerNavigationState.swift */; };
+		200000000000000000000006 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000006 /* FileItem.swift */; };
+		200000000000000000000007 /* FileSorting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000007 /* FileSorting.swift */; };
+		200000000000000000000008 /* FileSystemClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000008 /* FileSystemClient.swift */; };
+		200000000000000000000009 /* LocalFileSystemClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000009 /* LocalFileSystemClient.swift */; };
+		200000000000000000000010 /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000010 /* Places.swift */; };
+		200000000000000000000011 /* BrowserPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000011 /* BrowserPane.swift */; };
+		200000000000000000000012 /* ExplorerRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000012 /* ExplorerRootView.swift */; };
+		200000000000000000000013 /* FileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000013 /* FileViews.swift */; };
+		200000000000000000000014 /* PathBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000014 /* PathBar.swift */; };
+		200000000000000000000015 /* PlacesSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000015 /* PlacesSidebar.swift */; };
+		200000000000000000000016 /* PlatformFileServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000016 /* PlatformFileServices.swift */; };
+		200000000000000000000017 /* RenameSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000017 /* RenameSheet.swift */; };
+		200000000000000000000018 /* StatusStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000018 /* StatusStrip.swift */; };
+		200000000000000000000019 /* ExplorerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000019 /* ExplorerApp.swift */; };
+		200000000000000000000020 /* FileItemSorterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000020 /* FileItemSorterTests.swift */; };
+		200000000000000000000021 /* LocalFileSystemClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000021 /* LocalFileSystemClientTests.swift */; };
+		200000000000000000000022 /* ExplorerCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000011 /* ExplorerCore.framework */; };
+		200000000000000000000023 /* ExplorerCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000011 /* ExplorerCore.framework */; };
+		200000000000000000000024 /* ExplorerUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000012 /* ExplorerUI.framework */; };
+		200000000000000000000025 /* ExplorerCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000011 /* ExplorerCore.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		320000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 300000000000000000000001;
+			remoteInfo = ExplorerCore;
+		};
+		320000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 300000000000000000000001;
+			remoteInfo = ExplorerCore;
+		};
+		320000000000000000000003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 300000000000000000000002;
+			remoteInfo = ExplorerUI;
+		};
+		320000000000000000000004 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 300000000000000000000001;
+			remoteInfo = ExplorerCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000010 /* Explorer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Explorer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000011 /* ExplorerCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ExplorerCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000012 /* ExplorerUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ExplorerUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000013 /* ExplorerCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExplorerCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		100000000000000000000001 /* AuthorizedRootStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizedRootStore.swift; sourceTree = "<group>"; };
+		100000000000000000000002 /* DirectorySnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySnapshot.swift; sourceTree = "<group>"; };
+		100000000000000000000003 /* ExplorerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerController.swift; sourceTree = "<group>"; };
+		100000000000000000000004 /* ExplorerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerError.swift; sourceTree = "<group>"; };
+		100000000000000000000005 /* ExplorerNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerNavigationState.swift; sourceTree = "<group>"; };
+		100000000000000000000006 /* FileItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItem.swift; sourceTree = "<group>"; };
+		100000000000000000000007 /* FileSorting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSorting.swift; sourceTree = "<group>"; };
+		100000000000000000000008 /* FileSystemClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemClient.swift; sourceTree = "<group>"; };
+		100000000000000000000009 /* LocalFileSystemClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileSystemClient.swift; sourceTree = "<group>"; };
+		100000000000000000000010 /* Places.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Places.swift; sourceTree = "<group>"; };
+		100000000000000000000011 /* BrowserPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserPane.swift; sourceTree = "<group>"; };
+		100000000000000000000012 /* ExplorerRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerRootView.swift; sourceTree = "<group>"; };
+		100000000000000000000013 /* FileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileViews.swift; sourceTree = "<group>"; };
+		100000000000000000000014 /* PathBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathBar.swift; sourceTree = "<group>"; };
+		100000000000000000000015 /* PlacesSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesSidebar.swift; sourceTree = "<group>"; };
+		100000000000000000000016 /* PlatformFileServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformFileServices.swift; sourceTree = "<group>"; };
+		100000000000000000000017 /* RenameSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameSheet.swift; sourceTree = "<group>"; };
+		100000000000000000000018 /* StatusStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusStrip.swift; sourceTree = "<group>"; };
+		100000000000000000000019 /* ExplorerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerApp.swift; sourceTree = "<group>"; };
+		100000000000000000000020 /* FileItemSorterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItemSorterTests.swift; sourceTree = "<group>"; };
+		100000000000000000000021 /* LocalFileSystemClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileSystemClientTests.swift; sourceTree = "<group>"; };
+		100000000000000000000022 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		310000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000022 /* ExplorerCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310000000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000023 /* ExplorerCore.framework in Frameworks */,
+				200000000000000000000024 /* ExplorerUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310000000000000000000010 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000025 /* ExplorerCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000022 /* README.md */,
+				000000000000000000000004 /* Sources */,
+				000000000000000000000008 /* Tests */,
+				000000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000010 /* Explorer.app */,
+				000000000000000000000011 /* ExplorerCore.framework */,
+				000000000000000000000012 /* ExplorerUI.framework */,
+				000000000000000000000013 /* ExplorerCoreTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		000000000000000000000004 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000005 /* ExplorerCore */,
+				000000000000000000000006 /* ExplorerUI */,
+				000000000000000000000007 /* ExplorerApp */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		000000000000000000000005 /* ExplorerCore */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000001 /* AuthorizedRootStore.swift */,
+				100000000000000000000002 /* DirectorySnapshot.swift */,
+				100000000000000000000003 /* ExplorerController.swift */,
+				100000000000000000000004 /* ExplorerError.swift */,
+				100000000000000000000005 /* ExplorerNavigationState.swift */,
+				100000000000000000000006 /* FileItem.swift */,
+				100000000000000000000007 /* FileSorting.swift */,
+				100000000000000000000008 /* FileSystemClient.swift */,
+				100000000000000000000009 /* LocalFileSystemClient.swift */,
+				100000000000000000000010 /* Places.swift */,
+			);
+			path = ExplorerCore;
+			sourceTree = "<group>";
+		};
+		000000000000000000000006 /* ExplorerUI */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000011 /* BrowserPane.swift */,
+				100000000000000000000012 /* ExplorerRootView.swift */,
+				100000000000000000000013 /* FileViews.swift */,
+				100000000000000000000014 /* PathBar.swift */,
+				100000000000000000000015 /* PlacesSidebar.swift */,
+				100000000000000000000016 /* PlatformFileServices.swift */,
+				100000000000000000000017 /* RenameSheet.swift */,
+				100000000000000000000018 /* StatusStrip.swift */,
+			);
+			path = ExplorerUI;
+			sourceTree = "<group>";
+		};
+		000000000000000000000007 /* ExplorerApp */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000019 /* ExplorerApp.swift */,
+			);
+			path = ExplorerApp;
+			sourceTree = "<group>";
+		};
+		000000000000000000000008 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000009 /* ExplorerCoreTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		000000000000000000000009 /* ExplorerCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000020 /* FileItemSorterTests.swift */,
+				100000000000000000000021 /* LocalFileSystemClientTests.swift */,
+			);
+			path = ExplorerCoreTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		300000000000000000000001 /* ExplorerCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 410000000000000000000001 /* Build configuration list for PBXNativeTarget "ExplorerCore" */;
+			buildPhases = (
+				310000000000000000000001 /* Sources */,
+				310000000000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ExplorerCore;
+			productName = ExplorerCore;
+			productReference = 000000000000000000000011 /* ExplorerCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		300000000000000000000002 /* ExplorerUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 410000000000000000000004 /* Build configuration list for PBXNativeTarget "ExplorerUI" */;
+			buildPhases = (
+				310000000000000000000003 /* Sources */,
+				310000000000000000000004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				330000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = ExplorerUI;
+			productName = ExplorerUI;
+			productReference = 000000000000000000000012 /* ExplorerUI.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		300000000000000000000003 /* Explorer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 410000000000000000000007 /* Build configuration list for PBXNativeTarget "Explorer" */;
+			buildPhases = (
+				310000000000000000000006 /* Sources */,
+				310000000000000000000007 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				330000000000000000000002 /* PBXTargetDependency */,
+				330000000000000000000003 /* PBXTargetDependency */,
+			);
+			name = Explorer;
+			productName = Explorer;
+			productReference = 000000000000000000000010 /* Explorer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		300000000000000000000004 /* ExplorerCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 410000000000000000000010 /* Build configuration list for PBXNativeTarget "ExplorerCoreTests" */;
+			buildPhases = (
+				310000000000000000000009 /* Sources */,
+				310000000000000000000010 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				330000000000000000000004 /* PBXTargetDependency */,
+			);
+			name = ExplorerCoreTests;
+			productName = ExplorerCoreTests;
+			productReference = 000000000000000000000013 /* ExplorerCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					300000000000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					300000000000000000000002 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					300000000000000000000003 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					300000000000000000000004 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 300000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = 400000000000000000000001 /* Build configuration list for PBXProject "Explorer" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 000000000000000000000002;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 000000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				300000000000000000000003 /* Explorer */,
+				300000000000000000000001 /* ExplorerCore */,
+				300000000000000000000002 /* ExplorerUI */,
+				300000000000000000000004 /* ExplorerCoreTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		310000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000001 /* AuthorizedRootStore.swift in Sources */,
+				200000000000000000000002 /* DirectorySnapshot.swift in Sources */,
+				200000000000000000000003 /* ExplorerController.swift in Sources */,
+				200000000000000000000004 /* ExplorerError.swift in Sources */,
+				200000000000000000000005 /* ExplorerNavigationState.swift in Sources */,
+				200000000000000000000006 /* FileItem.swift in Sources */,
+				200000000000000000000007 /* FileSorting.swift in Sources */,
+				200000000000000000000008 /* FileSystemClient.swift in Sources */,
+				200000000000000000000009 /* LocalFileSystemClient.swift in Sources */,
+				200000000000000000000010 /* Places.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000011 /* BrowserPane.swift in Sources */,
+				200000000000000000000012 /* ExplorerRootView.swift in Sources */,
+				200000000000000000000013 /* FileViews.swift in Sources */,
+				200000000000000000000014 /* PathBar.swift in Sources */,
+				200000000000000000000015 /* PlacesSidebar.swift in Sources */,
+				200000000000000000000016 /* PlatformFileServices.swift in Sources */,
+				200000000000000000000017 /* RenameSheet.swift in Sources */,
+				200000000000000000000018 /* StatusStrip.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000019 /* ExplorerApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310000000000000000000009 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				200000000000000000000020 /* FileItemSorterTests.swift in Sources */,
+				200000000000000000000021 /* LocalFileSystemClientTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		330000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 300000000000000000000001 /* ExplorerCore */;
+			targetProxy = 320000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		330000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 300000000000000000000001 /* ExplorerCore */;
+			targetProxy = 320000000000000000000002 /* PBXContainerItemProxy */;
+		};
+		330000000000000000000003 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 300000000000000000000002 /* ExplorerUI */;
+			targetProxy = 320000000000000000000003 /* PBXContainerItemProxy */;
+		};
+		330000000000000000000004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 300000000000000000000001 /* ExplorerCore */;
+			targetProxy = 320000000000000000000004 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		400000000000000000000002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		400000000000000000000003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		410000000000000000000002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ExplorerCore;
+				INSTALL_PATH = "@rpath";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.ExplorerCore;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_VERSION = 6.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		410000000000000000000003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ExplorerCore;
+				INSTALL_PATH = "@rpath";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.ExplorerCore;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_VERSION = 6.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		410000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ExplorerUI;
+				INSTALL_PATH = "@rpath";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.ExplorerUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_VERSION = 6.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		410000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ExplorerUI;
+				INSTALL_PATH = "@rpath";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.ExplorerUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_VERSION = 6.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		410000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Explorer;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.Explorer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		410000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Explorer;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.Explorer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		410000000000000000000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.ExplorerCoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = ExplorerCore;
+			};
+			name = Debug;
+		};
+		410000000000000000000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.ExplorerCoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = ExplorerCore;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		400000000000000000000001 /* Build configuration list for PBXProject "Explorer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				400000000000000000000002 /* Debug */,
+				400000000000000000000003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		410000000000000000000001 /* Build configuration list for PBXNativeTarget "ExplorerCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				410000000000000000000002 /* Debug */,
+				410000000000000000000003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		410000000000000000000004 /* Build configuration list for PBXNativeTarget "ExplorerUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				410000000000000000000005 /* Debug */,
+				410000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		410000000000000000000007 /* Build configuration list for PBXNativeTarget "Explorer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				410000000000000000000008 /* Debug */,
+				410000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		410000000000000000000010 /* Build configuration list for PBXNativeTarget "ExplorerCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				410000000000000000000011 /* Debug */,
+				410000000000000000000012 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000001 /* Project object */;
+}
