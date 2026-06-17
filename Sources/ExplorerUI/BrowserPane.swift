@@ -311,7 +311,7 @@ struct BrowserPane: View {
             if controller.state.sort.key == key {
                 Label(
                     title,
-                    systemImage: controller.state.sort.direction == .ascending ? "checkmark.arrow.up" : "checkmark.arrow.down"
+                    systemImage: controller.state.sort.direction == .ascending ? "arrow.up" : "arrow.down"
                 )
             } else {
                 Text(title)
