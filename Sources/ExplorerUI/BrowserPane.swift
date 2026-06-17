@@ -2,6 +2,10 @@ import ExplorerCore
 import SwiftUI
 import UniformTypeIdentifiers
 
+#if os(macOS)
+import AppKit
+#endif
+
 public enum ExplorerPreferenceKeys {
     public static let pathBarInTitleBar = "ExplorerPathBarInTitleBar"
 }
@@ -19,7 +23,7 @@ struct BrowserPane: View {
     var body: some View {
         VStack(spacing: 0) {
             if !pathBarInTitleBar {
-                pathBar
+                pathBar()
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
             }
@@ -57,7 +61,8 @@ struct BrowserPane: View {
                 )
             )
         }
-        .navigationTitle(pathBarInTitleBar ? "" : navigationTitle)
+        .navigationTitle(navigationTitle)
+        .windowTitle(navigationTitle)
         .toolbar {
             toolbarContent
         }
@@ -102,8 +107,8 @@ struct BrowserPane: View {
         controller.state.currentURL.lastPathComponent.isEmpty ? controller.state.currentURL.path : controller.state.currentURL.lastPathComponent
     }
 
-    private var pathBar: some View {
-        PathBar(currentURL: controller.state.currentURL) { url in
+    private func pathBar(presentation: PathBarPresentation = .content) -> some View {
+        PathBar(currentURL: controller.state.currentURL, presentation: presentation) { url in
             controller.navigate(to: url)
         }
     }
@@ -134,14 +139,6 @@ struct BrowserPane: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        if pathBarInTitleBar {
-            ToolbarItem(placement: .principal) {
-                pathBar
-                    .frame(minWidth: 360, idealWidth: 520, maxWidth: 680)
-                    .padding(.vertical, 3)
-            }
-        }
-
         ToolbarItemGroup(placement: .navigation) {
             Button {
                 controller.goBack()
@@ -164,7 +161,13 @@ struct BrowserPane: View {
             }
         }
 
-        ToolbarSpacer(.fixed)
+        if pathBarInTitleBar {
+            ToolbarItem(placement: .principal) {
+                titleBarPathBar
+            }
+        } else {
+            ToolbarSpacer(.fixed)
+        }
 
         ToolbarItemGroup(placement: .primaryAction) {
             searchControl
@@ -216,6 +219,13 @@ struct BrowserPane: View {
             }
             .help("New Folder")
         }
+    }
+
+    private var titleBarPathBar: some View {
+        pathBar(presentation: .titleBar)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .layoutPriority(1)
     }
 
     @ViewBuilder
@@ -342,3 +352,40 @@ struct TransferRequest: Identifiable {
     let operation: Operation
     let urls: [URL]
 }
+
+private extension View {
+    @ViewBuilder
+    func windowTitle(_ title: String) -> some View {
+        #if os(macOS)
+        background(WindowTitleWriter(title: title))
+        #else
+        self
+        #endif
+    }
+}
+
+#if os(macOS)
+private struct WindowTitleWriter: NSViewRepresentable {
+    let title: String
+
+    func makeNSView(context: Context) -> NSView {
+        NSView(frame: .zero)
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { [weak nsView] in
+            guard let window = nsView?.window else {
+                return
+            }
+
+            if window.title != title {
+                window.title = title
+            }
+
+            if window.titleVisibility != .visible {
+                window.titleVisibility = .visible
+            }
+        }
+    }
+}
+#endif
