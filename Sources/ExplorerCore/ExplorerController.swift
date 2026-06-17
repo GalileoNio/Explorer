@@ -8,6 +8,7 @@ public final class ExplorerController: ObservableObject {
     @Published public private(set) var isLoading = false
     @Published public private(set) var errorMessage: String?
     @Published public private(set) var authorizedRoots: [AuthorizedRoot]
+    @Published public private(set) var clipboardOperation: ClipboardOperation?
 
     private let fileSystem: any FileSystemClient
     private let rootStore: AuthorizedRootStore
@@ -33,6 +34,10 @@ public final class ExplorerController: ObservableObject {
 
     public var selectedItems: [FileItem] {
         visibleItems.filter { state.selectedURLs.contains($0.url) }
+    }
+
+    public var isCurrentDirectoryWritable: Bool {
+        FileManager.default.isWritableFile(atPath: state.currentURL.path)
     }
 
     public func start() {
@@ -154,6 +159,22 @@ public final class ExplorerController: ObservableObject {
         state.selectedURLs = urls
     }
 
+    public func selectAllVisibleItems() {
+        state.selectedURLs = Set(visibleItems.map(\.url))
+    }
+
+    public func selectedItems(containing item: FileItem) -> [FileItem] {
+        if state.selectedURLs.contains(item.url) {
+            return selectedItems
+        }
+
+        return [item]
+    }
+
+    public func selectedURLs(containing item: FileItem) -> [URL] {
+        selectedItems(containing: item).map(\.url)
+    }
+
     public func details(for item: FileItem) async throws -> FileItemDetails {
         try await fileSystem.detailsOfItem(at: item.url)
     }
@@ -194,15 +215,32 @@ public final class ExplorerController: ObservableObject {
     }
 
     public func duplicate(_ item: FileItem) {
+        duplicate([item])
+    }
+
+    public func duplicate(_ items: [FileItem]) {
+        let urls = items.map(\.url)
+        guard !urls.isEmpty else {
+            return
+        }
+
         Task {
             do {
-                let duplicatedURL = try await fileSystem.duplicateItem(at: item.url)
-                state.selectedURLs = [duplicatedURL]
+                let duplicatedURLs = try await fileSystem.duplicateItems(urls)
+                state.selectedURLs = Set(duplicatedURLs)
                 loadCurrentDirectory()
             } catch {
                 present(error)
             }
         }
+    }
+
+    public func setClipboardOperation(_ operation: ClipboardOperation) {
+        clipboardOperation = operation
+    }
+
+    public func clearClipboardOperation() {
+        clipboardOperation = nil
     }
 
     public func copyItems(_ urls: [URL], to destination: URL) {
@@ -226,6 +264,20 @@ public final class ExplorerController: ObservableObject {
             } catch {
                 present(error)
             }
+        }
+    }
+
+    public func pasteItems(_ urls: [URL], operation: ClipboardOperationKind, to destination: URL) {
+        guard !urls.isEmpty else {
+            return
+        }
+
+        switch operation {
+        case .copy:
+            copyItems(urls, to: destination)
+        case .move:
+            moveItems(urls, to: destination)
+            clearClipboardOperation()
         }
     }
 

@@ -37,14 +37,47 @@ struct ExplorerWindow: View {
 
 struct ExplorerCommands: Commands {
     @FocusedValue(\.explorerController) private var controller
+    @FocusedValue(\.explorerActions) private var actions
 
     var body: some Commands {
         CommandMenu("File") {
             Button("New Folder") {
-                controller?.createFolder()
+                actions?.createFolder()
             }
             .keyboardShortcut("n", modifiers: [.command, .shift])
-            .disabled(controller == nil)
+            .disabled(actions == nil)
+
+            Button("Rename") {
+                actions?.renameSelection()
+            }
+            .keyboardShortcut(.return, modifiers: [])
+            .disabled(controller?.selectedItems.count != 1 || actions == nil)
+
+            Button("Get Info") {
+                actions?.showInfoForSelection()
+            }
+            .keyboardShortcut("i", modifiers: .command)
+            .disabled(controller?.selectedItems.count != 1 || actions == nil)
+
+            Button("Quick Look") {
+                actions?.quickLookSelection()
+            }
+            .keyboardShortcut(.space, modifiers: [])
+            .disabled(controller?.selectedItems.isEmpty != false || actions == nil)
+
+            #if os(macOS)
+            Button("Reveal in Finder") {
+                actions?.revealSelection()
+            }
+            .keyboardShortcut("r", modifiers: [.command, .option])
+            .disabled(controller?.selectedItems.isEmpty != false || actions == nil)
+            #endif
+
+            Button("Move to Trash", role: .destructive) {
+                actions?.trashSelection()
+            }
+            .keyboardShortcut(.delete, modifiers: .command)
+            .disabled(controller?.selectedItems.isEmpty != false || actions == nil)
 
             Button("Reload") {
                 controller?.loadCurrentDirectory()
@@ -71,6 +104,32 @@ struct ExplorerCommands: Commands {
             }
             .keyboardShortcut(.upArrow, modifiers: .command)
             .disabled(controller == nil)
+        }
+
+        CommandMenu("Edit Files") {
+            Button("Copy") {
+                actions?.copySelection()
+            }
+            .keyboardShortcut("c", modifiers: [.command, .option])
+            .disabled(controller?.selectedItems.isEmpty != false || actions == nil)
+
+            Button("Cut") {
+                actions?.cutSelection()
+            }
+            .keyboardShortcut("x", modifiers: [.command, .option])
+            .disabled(controller?.selectedItems.isEmpty != false || actions == nil)
+
+            Button("Paste") {
+                actions?.paste()
+            }
+            .keyboardShortcut("v", modifiers: [.command, .option])
+            .disabled(actions == nil)
+
+            Button("Select All Files") {
+                actions?.selectAll()
+            }
+            .keyboardShortcut("a", modifiers: [.command, .option])
+            .disabled(controller?.visibleItems.isEmpty != false || actions == nil)
         }
 
         CommandMenu("View") {

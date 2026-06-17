@@ -32,6 +32,9 @@
 		200000000000000000000023 /* ExplorerCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000011 /* ExplorerCore.framework */; };
 		200000000000000000000024 /* ExplorerUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000012 /* ExplorerUI.framework */; };
 		200000000000000000000025 /* ExplorerCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000000000000000000000011 /* ExplorerCore.framework */; };
+		200000000000000000000026 /* FileActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* FileActions.swift */; };
+		200000000000000000000027 /* FileActionMenus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000024 /* FileActionMenus.swift */; };
+		200000000000000000000028 /* FileActionAvailabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000025 /* FileActionAvailabilityTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +95,9 @@
 		100000000000000000000020 /* FileItemSorterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItemSorterTests.swift; sourceTree = "<group>"; };
 		100000000000000000000021 /* LocalFileSystemClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileSystemClientTests.swift; sourceTree = "<group>"; };
 		100000000000000000000022 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		100000000000000000000023 /* FileActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileActions.swift; sourceTree = "<group>"; };
+		100000000000000000000024 /* FileActionMenus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileActionMenus.swift; sourceTree = "<group>"; };
+		100000000000000000000025 /* FileActionAvailabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileActionAvailabilityTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +175,7 @@
 				100000000000000000000003 /* ExplorerController.swift */,
 				100000000000000000000004 /* ExplorerError.swift */,
 				100000000000000000000005 /* ExplorerNavigationState.swift */,
+				100000000000000000000023 /* FileActions.swift */,
 				100000000000000000000006 /* FileItem.swift */,
 				100000000000000000000007 /* FileSorting.swift */,
 				100000000000000000000008 /* FileSystemClient.swift */,
@@ -183,6 +190,7 @@
 			children = (
 				100000000000000000000011 /* BrowserPane.swift */,
 				100000000000000000000012 /* ExplorerRootView.swift */,
+				100000000000000000000024 /* FileActionMenus.swift */,
 				100000000000000000000013 /* FileViews.swift */,
 				100000000000000000000014 /* PathBar.swift */,
 				100000000000000000000015 /* PlacesSidebar.swift */,
@@ -212,6 +220,7 @@
 		000000000000000000000009 /* ExplorerCoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				100000000000000000000025 /* FileActionAvailabilityTests.swift */,
 				100000000000000000000020 /* FileItemSorterTests.swift */,
 				100000000000000000000021 /* LocalFileSystemClientTests.swift */,
 			);
@@ -347,6 +356,7 @@
 				200000000000000000000003 /* ExplorerController.swift in Sources */,
 				200000000000000000000004 /* ExplorerError.swift in Sources */,
 				200000000000000000000005 /* ExplorerNavigationState.swift in Sources */,
+				200000000000000000000026 /* FileActions.swift in Sources */,
 				200000000000000000000006 /* FileItem.swift in Sources */,
 				200000000000000000000007 /* FileSorting.swift in Sources */,
 				200000000000000000000008 /* FileSystemClient.swift in Sources */,
@@ -361,6 +371,7 @@
 			files = (
 				200000000000000000000011 /* BrowserPane.swift in Sources */,
 				200000000000000000000012 /* ExplorerRootView.swift in Sources */,
+				200000000000000000000027 /* FileActionMenus.swift in Sources */,
 				200000000000000000000013 /* FileViews.swift in Sources */,
 				200000000000000000000014 /* PathBar.swift in Sources */,
 				200000000000000000000015 /* PlacesSidebar.swift in Sources */,
@@ -382,6 +393,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				200000000000000000000028 /* FileActionAvailabilityTests.swift in Sources */,
 				200000000000000000000020 /* FileItemSorterTests.swift in Sources */,
 				200000000000000000000021 /* LocalFileSystemClientTests.swift in Sources */,
 			);

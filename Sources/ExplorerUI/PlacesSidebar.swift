@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct PlacesSidebar: View {
     @ObservedObject var controller: ExplorerController
     @State private var isChoosingFolder = false
+    @State private var detailsTarget: FileItem?
 
     private let places = DefaultPlaces.primaryPlaces()
 
@@ -26,13 +27,12 @@ struct PlacesSidebar: View {
                         placeButton(
                             title: root.title,
                             symbol: "folder.badge.person.crop",
-                            url: root.url
-                        )
-                        .contextMenu {
-                            Button("Remove", systemImage: "minus.circle") {
+                            url: root.url,
+                            isAuthorized: true,
+                            onRemove: {
                                 controller.removeAuthorizedRoot(root)
                             }
-                        }
+                        )
                     }
                 }
             }
@@ -63,9 +63,18 @@ struct PlacesSidebar: View {
                 controller.present(error)
             }
         }
+        .sheet(item: $detailsTarget) { item in
+            FileInfoSheet(item: item, controller: controller)
+        }
     }
 
-    private func placeButton(title: String, symbol: String, url: URL) -> some View {
+    private func placeButton(
+        title: String,
+        symbol: String,
+        url: URL,
+        isAuthorized: Bool = false,
+        onRemove: (() -> Void)? = nil
+    ) -> some View {
         Button {
             controller.navigate(to: url)
         } label: {
@@ -76,6 +85,15 @@ struct PlacesSidebar: View {
         .listRowBackground(
             controller.state.currentURL == url ? Color.accentColor.opacity(0.14) : Color.clear
         )
+        .contextMenu {
+            PlaceActionMenu(
+                title: title,
+                url: url,
+                isAuthorized: isAuthorized,
+                controller: controller,
+                onDetails: { detailsTarget = $0 },
+                onRemove: onRemove
+            )
+        }
     }
 }
-

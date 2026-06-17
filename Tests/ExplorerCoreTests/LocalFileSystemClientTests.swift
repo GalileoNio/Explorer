@@ -82,4 +82,16 @@ final class LocalFileSystemClientTests: XCTestCase {
         XCTAssertEqual(duplicate.lastPathComponent, "note copy.txt")
         XCTAssertTrue(FileManager.default.fileExists(atPath: duplicate.path))
     }
+
+    func testDuplicateItemsCreatesCopyForEachSource() async throws {
+        let firstURL = temporaryDirectory.appendingPathComponent("first.txt")
+        let secondURL = temporaryDirectory.appendingPathComponent("second.txt")
+        try "one".write(to: firstURL, atomically: true, encoding: .utf8)
+        try "two".write(to: secondURL, atomically: true, encoding: .utf8)
+
+        let duplicates = try await client.duplicateItems([firstURL, secondURL])
+
+        XCTAssertEqual(Set(duplicates.map(\.lastPathComponent)), ["first copy.txt", "second copy.txt"])
+        XCTAssertTrue(duplicates.allSatisfy { FileManager.default.fileExists(atPath: $0.path) })
+    }
 }

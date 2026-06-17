@@ -8,5 +8,6 @@ public protocol FileSystemClient: Sendable {
     func copyItems(_ urls: [URL], to destinationDirectory: URL) async throws -> [URL]
     func moveItems(_ urls: [URL], to destinationDirectory: URL) async throws -> [URL]
     func duplicateItem(at url: URL) async throws -> URL
+    func duplicateItems(_ urls: [URL]) async throws -> [URL]
     func trashItems(_ urls: [URL]) async throws
 }

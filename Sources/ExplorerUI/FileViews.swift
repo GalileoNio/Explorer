@@ -82,7 +82,7 @@ struct FileTile: View {
         .contextMenu {
             FileActionMenu(
                 item: item,
-                selectedURLs: controller.state.selectedURLs,
+                selectedItems: controller.selectedItems(containing: item),
                 controller: controller,
                 onRename: onRename,
                 onDetails: onDetails,
@@ -312,7 +312,7 @@ struct FileListRow: View {
         .contextMenu {
             FileActionMenu(
                 item: item,
-                selectedURLs: controller.state.selectedURLs,
+                selectedItems: controller.selectedItems(containing: item),
                 controller: controller,
                 onRename: onRename,
                 onDetails: onDetails,
@@ -682,63 +682,5 @@ private struct DetailRow: View {
                 .lineLimit(4)
         }
         .font(.callout)
-    }
-}
-
-struct FileActionMenu: View {
-    let item: FileItem
-    let selectedURLs: Set<URL>
-    let controller: ExplorerController
-    let onRename: (FileItem) -> Void
-    let onDetails: (FileItem) -> Void
-    let onTransfer: (TransferRequest) -> Void
-
-    private var transferURLs: [URL] {
-        selectedURLs.contains(item.url) && !selectedURLs.isEmpty ? Array(selectedURLs) : [item.url]
-    }
-
-    var body: some View {
-        Button("Open", systemImage: item.isNavigable ? "folder" : "arrow.up.forward.app") {
-            if item.isNavigable {
-                controller.navigate(to: item.url)
-            } else {
-                PlatformFileServices.open(item.url)
-            }
-        }
-
-        Button("Rename", systemImage: "pencil") {
-            onRename(item)
-        }
-
-        Button("Get Info", systemImage: "info.circle") {
-            onDetails(item)
-        }
-
-        Button("Duplicate", systemImage: "plus.square.on.square") {
-            controller.duplicate(item)
-        }
-
-        Divider()
-
-        Button("Copy To...", systemImage: "doc.on.doc") {
-            onTransfer(TransferRequest(operation: .copy, urls: transferURLs))
-        }
-
-        Button("Move To...", systemImage: "folder") {
-            onTransfer(TransferRequest(operation: .move, urls: transferURLs))
-        }
-
-        #if os(macOS)
-        Button("Reveal in Finder", systemImage: "finder") {
-            PlatformFileServices.reveal(item.url)
-        }
-        #endif
-
-        Divider()
-
-        Button("Move to Trash", systemImage: "trash", role: .destructive) {
-            let items = controller.visibleItems.filter { transferURLs.contains($0.url) }
-            controller.trash(items.isEmpty ? [item] : items)
-        }
     }
 }

@@ -48,6 +48,11 @@ struct BrowserPane: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
+            .contextMenu {
+                FileBackgroundActionMenu(controller: controller) { item in
+                    detailsTarget = item
+                }
+            }
             .onTapGesture {
                 controller.clearSelection()
             }
@@ -66,10 +71,11 @@ struct BrowserPane: View {
             )
         }
         .navigationTitle(navigationTitle)
-        .windowTitle(navigationTitle, isVisible: !pathBarInTitleBar)
+        .windowTitle(navigationTitle)
         .toolbar {
             toolbarContent
         }
+        .focusedSceneValue(\.explorerActions, focusedActions)
         .onAppear {
             controller.start()
         }
@@ -168,13 +174,13 @@ struct BrowserPane: View {
             } label: {
                 Label("Up", systemImage: "chevron.up")
             }
-
-            if pathBarInTitleBar {
-                titleBarCenter
-            }
         }
 
-        if !pathBarInTitleBar {
+        if pathBarInTitleBar {
+            ToolbarItem(placement: .principal) {
+                titleBarPathBar
+            }
+        } else {
             ToolbarSpacer(.fixed)
         }
 
@@ -231,32 +237,15 @@ struct BrowserPane: View {
     }
 
     @ViewBuilder
-    private var titleBarCenter: some View {
+    private var titleBarPathBar: some View {
         #if os(macOS)
-        ExpandingToolbarView(preferredWidth: 10_000) {
-            HStack(spacing: 12) {
-                Text(navigationTitle)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .layoutPriority(0)
-
-                pathBar()
-                    .layoutPriority(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        ExpandingToolbarView {
+            pathBar()
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         #else
-        HStack(spacing: 12) {
-            Text(navigationTitle)
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
-
-            pathBar()
-                .layoutPriority(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        pathBar()
+            .frame(maxWidth: .infinity, alignment: .leading)
         #endif
     }
 
@@ -335,6 +324,68 @@ struct BrowserPane: View {
         isChoosingDestination = true
     }
 
+    private var focusedActions: ExplorerFocusedActions {
+        ExplorerFocusedActions(
+            renameSelection: renameSelectedItem,
+            showInfoForSelection: showInfoForSelectedItem,
+            copySelection: { copySelectedItems(operation: .copy) },
+            cutSelection: { copySelectedItems(operation: .move) },
+            paste: pasteIntoCurrentDirectory,
+            quickLookSelection: quickLookSelectedItems,
+            revealSelection: revealSelectedItems,
+            trashSelection: trashSelectedItems,
+            selectAll: {
+                controller.selectAllVisibleItems()
+            },
+            createFolder: {
+                controller.createFolder()
+            }
+        )
+    }
+
+    private func renameSelectedItem() {
+        guard controller.selectedItems.count == 1, let item = controller.selectedItems.first else {
+            return
+        }
+
+        renameTarget = item
+    }
+
+    private func showInfoForSelectedItem() {
+        guard controller.selectedItems.count == 1, let item = controller.selectedItems.first else {
+            return
+        }
+
+        detailsTarget = item
+    }
+
+    private func copySelectedItems(operation: ClipboardOperationKind) {
+        FileActionPerformer.copy(
+            urls: controller.selectedItems.map(\.url),
+            operation: operation,
+            controller: controller
+        )
+    }
+
+    private func pasteIntoCurrentDirectory() {
+        FileActionPerformer.paste(
+            context: FileActionPerformer.context(controller: controller, selectedItems: []),
+            controller: controller
+        )
+    }
+
+    private func quickLookSelectedItems() {
+        PlatformFileServices.quickLookItems(controller.selectedItems.map(\.url))
+    }
+
+    private func revealSelectedItems() {
+        PlatformFileServices.revealItems(controller.selectedItems.map(\.url))
+    }
+
+    private func trashSelectedItems() {
+        controller.trash(controller.selectedItems)
+    }
+
     private func handleDrop(_ providers: [NSItemProvider], destination: URL) -> Bool {
         let matchingProviders = providers.filter {
             $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
@@ -387,9 +438,9 @@ struct TransferRequest: Identifiable {
 
 private extension View {
     @ViewBuilder
-    func windowTitle(_ title: String, isVisible: Bool) -> some View {
+    func windowTitle(_ title: String) -> some View {
         #if os(macOS)
-        background(WindowTitleWriter(title: title, isVisible: isVisible))
+        background(WindowTitleWriter(title: title))
         #else
         self
         #endif
@@ -399,34 +450,30 @@ private extension View {
 #if os(macOS)
 private struct ExpandingToolbarView<Content: View>: NSViewRepresentable {
     let content: Content
-    let preferredWidth: CGFloat
 
-    init(preferredWidth: CGFloat = 10_000, @ViewBuilder content: () -> Content) {
-        self.preferredWidth = preferredWidth
+    init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
 
     func makeNSView(context: Context) -> ExpandingToolbarContainer<Content> {
-        ExpandingToolbarContainer(rootView: content, preferredWidth: preferredWidth)
+        ExpandingToolbarContainer(rootView: content)
     }
 
     func updateNSView(_ nsView: ExpandingToolbarContainer<Content>, context: Context) {
-        nsView.update(rootView: content, preferredWidth: preferredWidth)
+        nsView.update(rootView: content)
     }
 }
 
 private final class ExpandingToolbarContainer<Content: View>: NSView {
     private let hostingView: NSHostingView<Content>
-    private var preferredWidth: CGFloat
 
     override var intrinsicContentSize: NSSize {
         let hostingSize = hostingView.intrinsicContentSize
-        return NSSize(width: preferredWidth, height: hostingSize.height)
+        return NSSize(width: NSView.noIntrinsicMetric, height: hostingSize.height)
     }
 
-    init(rootView: Content, preferredWidth: CGFloat) {
+    init(rootView: Content) {
         self.hostingView = NSHostingView(rootView: rootView)
-        self.preferredWidth = preferredWidth
         super.init(frame: .zero)
 
         setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -439,7 +486,6 @@ private final class ExpandingToolbarContainer<Content: View>: NSView {
         hostingView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         hostingView.setContentHuggingPriority(.required, for: .vertical)
         hostingView.setContentCompressionResistancePriority(.required, for: .vertical)
-        hostingView.sizingOptions = [.minSize, .intrinsicContentSize]
 
         addSubview(hostingView)
         NSLayoutConstraint.activate([
@@ -455,16 +501,14 @@ private final class ExpandingToolbarContainer<Content: View>: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func update(rootView: Content, preferredWidth: CGFloat) {
+    func update(rootView: Content) {
         hostingView.rootView = rootView
-        self.preferredWidth = preferredWidth
         invalidateIntrinsicContentSize()
     }
 }
 
 private struct WindowTitleWriter: NSViewRepresentable {
     let title: String
-    let isVisible: Bool
 
     func makeNSView(context: Context) -> NSView {
         NSView(frame: .zero)
@@ -480,9 +524,8 @@ private struct WindowTitleWriter: NSViewRepresentable {
                 window.title = title
             }
 
-            let nextVisibility: NSWindow.TitleVisibility = isVisible ? .visible : .hidden
-            if window.titleVisibility != nextVisibility {
-                window.titleVisibility = nextVisibility
+            if window.titleVisibility != .visible {
+                window.titleVisibility = .visible
             }
         }
     }

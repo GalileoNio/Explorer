@@ -116,6 +116,15 @@ public struct LocalFileSystemClient: FileSystemClient, @unchecked Sendable {
         return try await copyItems([url], to: parent).first ?? url
     }
 
+    public func duplicateItems(_ urls: [URL]) async throws -> [URL] {
+        var duplicatedURLs: [URL] = []
+        for url in urls {
+            duplicatedURLs.append(try await duplicateItem(at: url))
+        }
+
+        return duplicatedURLs
+    }
+
     public func trashItems(_ urls: [URL]) async throws {
         for url in urls {
             do {
