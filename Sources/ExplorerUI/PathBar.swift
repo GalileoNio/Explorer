@@ -1,17 +1,7 @@
 import SwiftUI
 
-enum PathBarPresentation {
-    case content
-    case titleBar
-
-    var usesGlassChrome: Bool {
-        self == .content
-    }
-}
-
 struct PathBar: View {
     let currentURL: URL
-    let presentation: PathBarPresentation
     let onNavigate: (URL) -> Void
 
     @State private var isEditingPath = false
@@ -33,7 +23,7 @@ struct PathBar: View {
 
     var body: some View {
         pathBarContent
-            .wrappedInGlassContainer(when: presentation.usesGlassChrome)
+            .wrappedInGlassContainer()
             .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.smooth(duration: 0.2), value: isEditingPath)
         .onAppear {
@@ -96,7 +86,6 @@ struct PathBar: View {
                 Text(component.title)
                     .lineLimit(1)
             }
-            .pathBarButtonStyle(useGlass: presentation.usesGlassChrome)
             .controlSize(.small)
         }
     }
@@ -117,7 +106,6 @@ struct PathBar: View {
                 Label("Go", systemImage: "arrow.forward")
             }
             .labelStyle(.iconOnly)
-            .pathBarButtonStyle(useGlass: presentation.usesGlassChrome)
             .controlSize(.small)
             .help("Go")
 
@@ -127,14 +115,13 @@ struct PathBar: View {
                 Label("Cancel", systemImage: "xmark")
             }
             .labelStyle(.iconOnly)
-            .pathBarButtonStyle(useGlass: presentation.usesGlassChrome)
             .controlSize(.small)
             .help("Cancel")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
-        .pathBarGlassBackground(when: presentation.usesGlassChrome)
+        .glassEffect(.regular, in: Capsule())
     }
 
     private func beginEditing() {
@@ -187,30 +174,8 @@ struct PathBar: View {
 
 private extension View {
     @ViewBuilder
-    func wrappedInGlassContainer(when isEnabled: Bool) -> some View {
-        if isEnabled {
-            GlassEffectContainer(spacing: 6) {
-                self
-            }
-        } else {
-            self
-        }
-    }
-
-    @ViewBuilder
-    func pathBarButtonStyle(useGlass: Bool) -> some View {
-        if useGlass {
-            self.buttonStyle(.glass)
-        } else {
-            self
-        }
-    }
-
-    @ViewBuilder
-    func pathBarGlassBackground(when isEnabled: Bool) -> some View {
-        if isEnabled {
-            self.glassEffect(.regular, in: Capsule())
-        } else {
+    func wrappedInGlassContainer() -> some View {
+        GlassEffectContainer(spacing: 6) {
             self
         }
     }

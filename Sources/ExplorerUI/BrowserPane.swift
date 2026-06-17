@@ -107,8 +107,8 @@ struct BrowserPane: View {
         controller.state.currentURL.lastPathComponent.isEmpty ? controller.state.currentURL.path : controller.state.currentURL.lastPathComponent
     }
 
-    private func pathBar(presentation: PathBarPresentation = .content) -> some View {
-        PathBar(currentURL: controller.state.currentURL, presentation: presentation) { url in
+    private func pathBar() -> some View {
+        PathBar(currentURL: controller.state.currentURL) { url in
             controller.navigate(to: url)
         }
     }
@@ -221,11 +221,17 @@ struct BrowserPane: View {
         }
     }
 
+    @ViewBuilder
     private var titleBarPathBar: some View {
-        pathBar(presentation: .titleBar)
+        #if os(macOS)
+        ExpandingToolbarView {
+            pathBar()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        #else
+        pathBar()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .layoutPriority(1)
+        #endif
     }
 
     @ViewBuilder
@@ -365,6 +371,65 @@ private extension View {
 }
 
 #if os(macOS)
+private struct ExpandingToolbarView<Content: View>: NSViewRepresentable {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    func makeNSView(context: Context) -> ExpandingToolbarContainer<Content> {
+        ExpandingToolbarContainer(rootView: content)
+    }
+
+    func updateNSView(_ nsView: ExpandingToolbarContainer<Content>, context: Context) {
+        nsView.update(rootView: content)
+    }
+}
+
+private final class ExpandingToolbarContainer<Content: View>: NSView {
+    private let hostingView: NSHostingView<Content>
+
+    override var intrinsicContentSize: NSSize {
+        let hostingSize = hostingView.intrinsicContentSize
+        return NSSize(width: NSView.noIntrinsicMetric, height: hostingSize.height)
+    }
+
+    init(rootView: Content) {
+        self.hostingView = NSHostingView(rootView: rootView)
+        super.init(frame: .zero)
+
+        setContentHuggingPriority(.defaultLow, for: .horizontal)
+        setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        setContentHuggingPriority(.required, for: .vertical)
+        setContentCompressionResistancePriority(.required, for: .vertical)
+
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        hostingView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        hostingView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        hostingView.setContentHuggingPriority(.required, for: .vertical)
+        hostingView.setContentCompressionResistancePriority(.required, for: .vertical)
+
+        addSubview(hostingView)
+        NSLayoutConstraint.activate([
+            hostingView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            hostingView.topAnchor.constraint(equalTo: topAnchor),
+            hostingView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func update(rootView: Content) {
+        hostingView.rootView = rootView
+        invalidateIntrinsicContentSize()
+    }
+}
+
 private struct WindowTitleWriter: NSViewRepresentable {
     let title: String
 
