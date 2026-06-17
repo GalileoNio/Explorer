@@ -9,6 +9,7 @@ public struct ExplorerNavigationState: Equatable, Sendable {
     public var viewMode: FileViewMode
     public var sort: FileSort
     public var showHiddenFiles: Bool
+    public var iconSize: Double
 
     public init(
         currentURL: URL = ExplorerDefaultRoot.url,
@@ -18,7 +19,8 @@ public struct ExplorerNavigationState: Equatable, Sendable {
         searchQuery: String = "",
         viewMode: FileViewMode = .grid,
         sort: FileSort = FileSort(),
-        showHiddenFiles: Bool = false
+        showHiddenFiles: Bool = false,
+        iconSize: Double = 42
     ) {
         self.currentURL = currentURL
         self.backStack = backStack
@@ -28,6 +30,7 @@ public struct ExplorerNavigationState: Equatable, Sendable {
         self.viewMode = viewMode
         self.sort = sort
         self.showHiddenFiles = showHiddenFiles
+        self.iconSize = iconSize
     }
 
     public var canGoBack: Bool { !backStack.isEmpty }

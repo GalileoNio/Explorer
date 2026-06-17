@@ -130,6 +130,10 @@ public final class ExplorerController: ObservableObject {
         loadCurrentDirectory()
     }
 
+    public func setIconSize(_ iconSize: Double) {
+        state.iconSize = min(max(iconSize, 28), 80)
+    }
+
     public func select(_ item: FileItem, extending: Bool = false) {
         if extending {
             if state.selectedURLs.contains(item.url) {
@@ -144,6 +148,10 @@ public final class ExplorerController: ObservableObject {
 
     public func clearSelection() {
         state.selectedURLs.removeAll()
+    }
+
+    public func setSelectedURLs(_ urls: Set<URL>) {
+        state.selectedURLs = urls
     }
 
     public func addAuthorizedRoot(_ url: URL) {

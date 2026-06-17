@@ -2,6 +2,10 @@ import ExplorerCore
 import SwiftUI
 import UniformTypeIdentifiers
 
+public enum ExplorerPreferenceKeys {
+    public static let pathBarInTitleBar = "ExplorerPathBarInTitleBar"
+}
+
 struct BrowserPane: View {
     @ObservedObject var controller: ExplorerController
 
@@ -9,15 +13,16 @@ struct BrowserPane: View {
     @State private var pendingTransfer: TransferRequest?
     @State private var isChoosingDestination = false
     @State private var isSearchExpanded = false
+    @AppStorage(ExplorerPreferenceKeys.pathBarInTitleBar) private var pathBarInTitleBar = false
     @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            PathBar(currentURL: controller.state.currentURL) { url in
-                controller.navigate(to: url)
+            if !pathBarInTitleBar {
+                pathBar
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
 
             ZStack {
                 if controller.isLoading {
@@ -45,12 +50,19 @@ struct BrowserPane: View {
             StatusStrip(
                 itemCount: controller.visibleItems.count,
                 selectedCount: controller.state.selectedURLs.count,
-                loadedAt: controller.snapshot?.loadedAt
+                loadedAt: controller.snapshot?.loadedAt,
+                iconSize: Binding(
+                    get: { controller.state.iconSize },
+                    set: { controller.setIconSize($0) }
+                )
             )
         }
-        .navigationTitle(controller.state.currentURL.lastPathComponent.isEmpty ? controller.state.currentURL.path : controller.state.currentURL.lastPathComponent)
+        .navigationTitle(pathBarInTitleBar ? "" : navigationTitle)
         .toolbar {
             toolbarContent
+        }
+        .onAppear {
+            controller.start()
         }
         .fileImporter(
             isPresented: $isChoosingDestination,
@@ -86,6 +98,16 @@ struct BrowserPane: View {
         }
     }
 
+    private var navigationTitle: String {
+        controller.state.currentURL.lastPathComponent.isEmpty ? controller.state.currentURL.path : controller.state.currentURL.lastPathComponent
+    }
+
+    private var pathBar: some View {
+        PathBar(currentURL: controller.state.currentURL) { url in
+            controller.navigate(to: url)
+        }
+    }
+
     @ViewBuilder
     private var content: some View {
         switch controller.state.viewMode {
@@ -93,6 +115,7 @@ struct BrowserPane: View {
             FileGridView(
                 items: controller.visibleItems,
                 selectedURLs: controller.state.selectedURLs,
+                iconSize: CGFloat(controller.state.iconSize),
                 controller: controller,
                 onRename: { renameTarget = $0 },
                 onTransfer: beginTransfer
@@ -101,6 +124,7 @@ struct BrowserPane: View {
             FileListView(
                 items: controller.visibleItems,
                 selectedURLs: controller.state.selectedURLs,
+                iconSize: CGFloat(controller.state.iconSize),
                 controller: controller,
                 onRename: { renameTarget = $0 },
                 onTransfer: beginTransfer
@@ -110,6 +134,14 @@ struct BrowserPane: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        if pathBarInTitleBar {
+            ToolbarItem(placement: .principal) {
+                pathBar
+                    .frame(minWidth: 360, idealWidth: 520, maxWidth: 680)
+                    .padding(.vertical, 3)
+            }
+        }
+
         ToolbarItemGroup(placement: .navigation) {
             Button {
                 controller.goBack()
@@ -170,6 +202,7 @@ struct BrowserPane: View {
                             set: { controller.setShowHiddenFiles($0) }
                         )
                     )
+                    Toggle("Address Bar in Title Bar", isOn: $pathBarInTitleBar)
                 }
             } label: {
                 Label("View Options", systemImage: "slider.horizontal.3")

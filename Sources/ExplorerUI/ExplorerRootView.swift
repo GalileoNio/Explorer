@@ -14,9 +14,6 @@ public struct ExplorerRootView: View {
         } detail: {
             BrowserPane(controller: controller)
         }
-        .onAppear {
-            controller.start()
-        }
         .alert(
             "Explorer",
             isPresented: Binding(

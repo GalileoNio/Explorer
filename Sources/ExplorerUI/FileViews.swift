@@ -11,28 +11,40 @@ import UIKit
 struct FileGridView: View {
     let items: [FileItem]
     let selectedURLs: Set<URL>
+    let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
-    private let columns = [
-        GridItem(.adaptive(minimum: 112, maximum: 152), spacing: 10)
-    ]
+    private let selectionCoordinateSpace = "FileGridSelection"
+
+    private var columns: [GridItem] {
+        [GridItem(.adaptive(minimum: tileWidth, maximum: tileWidth + 28), spacing: 8)]
+    }
+
+    private var tileWidth: CGFloat {
+        max(112, min(iconSize * 2.25, 176))
+    }
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
                 ForEach(items) { item in
                     FileTile(
                         item: item,
                         isSelected: selectedURLs.contains(item.url),
+                        iconSize: iconSize,
                         controller: controller,
                         onRename: onRename,
                         onTransfer: onTransfer
                     )
+                    .background(FileItemFrameReader(url: item.url, coordinateSpaceName: selectionCoordinateSpace))
                 }
             }
-            .padding(12)
+            .padding(10)
+        }
+        .fileDragSelection(coordinateSpaceName: selectionCoordinateSpace) { selectedURLs in
+            controller.setSelectedURLs(selectedURLs)
         }
     }
 }
@@ -40,21 +52,22 @@ struct FileGridView: View {
 struct FileTile: View {
     let item: FileItem
     let isSelected: Bool
+    let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
-            FileIconView(item: item, size: 42)
+        VStack(spacing: 6) {
+            FileIconView(item: item, size: iconSize)
             Text(item.name)
-                .font(.callout)
+                .font(.caption)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .frame(maxWidth: .infinity, minHeight: 36, alignment: .top)
+                .frame(maxWidth: .infinity, minHeight: 32, alignment: .top)
         }
-        .padding(8)
-        .frame(width: 124, height: 118)
+        .padding(6)
+        .frame(width: tileWidth, height: tileHeight)
         .background(selectionBackground)
         .contentShape(RoundedRectangle(cornerRadius: 8))
         .onTapGesture {
@@ -91,6 +104,14 @@ struct FileTile: View {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isSelected ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
             )
+    }
+
+    private var tileWidth: CGFloat {
+        max(112, min(iconSize * 2.25, 176))
+    }
+
+    private var tileHeight: CGFloat {
+        max(104, iconSize * 1.25 + 50)
     }
 
     private func openOrNavigate(_ item: FileItem) {
@@ -143,49 +164,76 @@ struct FileTile: View {
 struct FileListView: View {
     let items: [FileItem]
     let selectedURLs: Set<URL>
+    let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
+    private let selectionCoordinateSpace = "FileListSelection"
+
     var body: some View {
-        ScrollView {
+        ScrollView([.horizontal, .vertical]) {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                 Section {
                     ForEach(items) { item in
                         FileListRow(
                             item: item,
                             isSelected: selectedURLs.contains(item.url),
+                            iconSize: listIconSize,
                             controller: controller,
                             onRename: onRename,
                             onTransfer: onTransfer
                         )
+                        .background(FileItemFrameReader(url: item.url, coordinateSpaceName: selectionCoordinateSpace))
                     }
                 } header: {
                     FileListHeader()
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .frame(minWidth: FileListColumns.totalWidth, alignment: .leading)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+        }
+        .fileDragSelection(coordinateSpaceName: selectionCoordinateSpace) { selectedURLs in
+            controller.setSelectedURLs(selectedURLs)
         }
     }
+
+    private var listIconSize: CGFloat {
+        min(max(iconSize * 0.42, 16), 26)
+    }
+}
+
+private enum FileListColumns {
+    static let name: CGFloat = 300
+    static let modified: CGFloat = 138
+    static let created: CGFloat = 138
+    static let size: CGFloat = 88
+    static let kind: CGFloat = 154
+    static let fileExtension: CGFloat = 78
+    static let totalWidth = name + modified + created + size + kind + fileExtension + 12 * 5 + 20
 }
 
 struct FileListHeader: View {
     var body: some View {
         HStack(spacing: 12) {
             Text("Name")
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: FileListColumns.name, alignment: .leading)
             Text("Modified")
-                .frame(width: 140, alignment: .leading)
+                .frame(width: FileListColumns.modified, alignment: .leading)
+            Text("Created")
+                .frame(width: FileListColumns.created, alignment: .leading)
             Text("Size")
-                .frame(width: 90, alignment: .trailing)
+                .frame(width: FileListColumns.size, alignment: .trailing)
             Text("Kind")
-                .frame(width: 120, alignment: .leading)
+                .frame(width: FileListColumns.kind, alignment: .leading)
+            Text("Extension")
+                .frame(width: FileListColumns.fileExtension, alignment: .leading)
         }
         .font(.caption.weight(.semibold))
         .foregroundStyle(.secondary)
         .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.vertical, 5)
         .background(.regularMaterial)
     }
 }
@@ -193,6 +241,7 @@ struct FileListHeader: View {
 struct FileListRow: View {
     let item: FileItem
     let isSelected: Bool
+    let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
@@ -200,27 +249,47 @@ struct FileListRow: View {
     var body: some View {
         HStack(spacing: 12) {
             HStack(spacing: 8) {
-                FileIconView(item: item, size: 20)
+                FileIconView(item: item, size: iconSize)
                 Text(item.name)
                     .lineLimit(1)
+                if item.isHidden {
+                    Image(systemName: "eye.slash")
+                        .imageScale(.small)
+                        .foregroundStyle(.tertiary)
+                        .help("Hidden")
+                }
+                if item.kind == .symbolicLink {
+                    Image(systemName: "arrowshape.turn.up.right")
+                        .imageScale(.small)
+                        .foregroundStyle(.tertiary)
+                        .help("Symbolic Link")
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: FileListColumns.name, alignment: .leading)
 
-            Text(item.modifiedAt.map(Self.dateFormatter.string(from:)) ?? "--")
+            Text(Self.dateText(item.modifiedAt))
                 .lineLimit(1)
-                .frame(width: 140, alignment: .leading)
+                .frame(width: FileListColumns.modified, alignment: .leading)
+
+            Text(Self.dateText(item.createdAt))
+                .lineLimit(1)
+                .frame(width: FileListColumns.created, alignment: .leading)
 
             Text(item.formattedSize)
                 .lineLimit(1)
-                .frame(width: 90, alignment: .trailing)
+                .frame(width: FileListColumns.size, alignment: .trailing)
 
             Text(item.displayType)
                 .lineLimit(1)
-                .frame(width: 120, alignment: .leading)
+                .frame(width: FileListColumns.kind, alignment: .leading)
+
+            Text(extensionText)
+                .lineLimit(1)
+                .frame(width: FileListColumns.fileExtension, alignment: .leading)
         }
-        .font(.callout)
+        .font(.subheadline)
         .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
@@ -248,10 +317,19 @@ struct FileListRow: View {
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
+        formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter
     }()
+
+    private static func dateText(_ date: Date?) -> String {
+        date.map(Self.dateFormatter.string(from:)) ?? "--"
+    }
+
+    private var extensionText: String {
+        let pathExtension = item.url.pathExtension
+        return pathExtension.isEmpty ? "--" : ".\(pathExtension.lowercased())"
+    }
 
     private func openOrNavigate(_ item: FileItem) {
         if item.isNavigable {
@@ -311,6 +389,115 @@ struct FileIconView: View {
             return .teal
         case .file, .unknown:
             return .secondary
+        }
+    }
+}
+
+private struct FileItemFrameReader: View {
+    let url: URL
+    let coordinateSpaceName: String
+
+    var body: some View {
+        GeometryReader { proxy in
+            Color.clear.preference(
+                key: FileFramePreferenceKey.self,
+                value: [url: proxy.frame(in: .named(coordinateSpaceName))]
+            )
+        }
+    }
+}
+
+private struct FileFramePreferenceKey: PreferenceKey {
+    static let defaultValue: [URL: CGRect] = [:]
+
+    static func reduce(value: inout [URL: CGRect], nextValue: () -> [URL: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, next in next })
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func fileDragSelection(coordinateSpaceName: String, onSelect: @escaping (Set<URL>) -> Void) -> some View {
+        #if os(macOS)
+        modifier(FileDragSelectionSurface(coordinateSpaceName: coordinateSpaceName, onSelect: onSelect))
+        #else
+        self
+        #endif
+    }
+}
+
+private struct FileDragSelectionSurface: ViewModifier {
+    let coordinateSpaceName: String
+    let onSelect: (Set<URL>) -> Void
+
+    @State private var itemFrames: [URL: CGRect] = [:]
+    @State private var selectionStart: CGPoint?
+    @State private var selectionRect: CGRect?
+
+    func body(content: Content) -> some View {
+        content
+            .coordinateSpace(name: coordinateSpaceName)
+            .onPreferenceChange(FileFramePreferenceKey.self) { frames in
+                itemFrames = frames
+            }
+            .overlay(alignment: .topLeading) {
+                if let selectionRect {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.accentColor.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.accentColor.opacity(0.55), lineWidth: 1)
+                        )
+                        .frame(width: max(selectionRect.width, 1), height: max(selectionRect.height, 1))
+                        .offset(x: selectionRect.minX, y: selectionRect.minY)
+                        .allowsHitTesting(false)
+                }
+            }
+            .simultaneousGesture(selectionGesture)
+    }
+
+    private var selectionGesture: some Gesture {
+        DragGesture(minimumDistance: 6, coordinateSpace: .named(coordinateSpaceName))
+            .onChanged { value in
+                updateSelection(with: value)
+            }
+            .onEnded { _ in
+                selectionStart = nil
+                selectionRect = nil
+            }
+    }
+
+    private func updateSelection(with value: DragGesture.Value) {
+        if selectionStart == nil {
+            guard canBeginSelection(at: value.startLocation) else {
+                return
+            }
+            selectionStart = value.startLocation
+        }
+
+        guard let selectionStart else {
+            return
+        }
+
+        let rect = CGRect(
+            x: min(selectionStart.x, value.location.x),
+            y: min(selectionStart.y, value.location.y),
+            width: abs(value.location.x - selectionStart.x),
+            height: abs(value.location.y - selectionStart.y)
+        )
+        selectionRect = rect
+
+        let selectedURLs = Set(
+            itemFrames
+                .filter { _, frame in rect.intersects(frame) }
+                .map { url, _ in url }
+        )
+        onSelect(selectedURLs)
+    }
+
+    private func canBeginSelection(at location: CGPoint) -> Bool {
+        !itemFrames.values.contains { frame in
+            frame.insetBy(dx: -4, dy: -4).contains(location)
         }
     }
 }
