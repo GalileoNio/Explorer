@@ -154,6 +154,10 @@ public final class ExplorerController: ObservableObject {
         state.selectedURLs = urls
     }
 
+    public func details(for item: FileItem) async throws -> FileItemDetails {
+        try await fileSystem.detailsOfItem(at: item.url)
+    }
+
     public func addAuthorizedRoot(_ url: URL) {
         let root = rootStore.add(url: url)
         _ = rootStore.startAccessing(root)

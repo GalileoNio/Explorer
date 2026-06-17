@@ -27,6 +27,35 @@ final class LocalFileSystemClientTests: XCTestCase {
         XCTAssertEqual(snapshot.items.map(\.name), ["sample.txt"])
     }
 
+    func testListsRealFileSizeAndModificationDate() async throws {
+        let fileURL = temporaryDirectory.appendingPathComponent("metadata.txt")
+        let modifiedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        try "hello".write(to: fileURL, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.modificationDate: modifiedAt], ofItemAtPath: fileURL.path)
+
+        let snapshot = try await client.contentsOfDirectory(at: temporaryDirectory, includeHidden: false)
+        let item = try XCTUnwrap(snapshot.items.first { $0.name == "metadata.txt" })
+
+        XCTAssertEqual(item.size, 5)
+        XCTAssertEqual(item.modifiedAt?.timeIntervalSince1970 ?? 0, modifiedAt.timeIntervalSince1970, accuracy: 1)
+    }
+
+    func testLoadsRealItemDetails() async throws {
+        let fileURL = temporaryDirectory.appendingPathComponent("details.txt")
+        let modifiedAt = Date(timeIntervalSince1970: 1_710_000_000)
+        try "details".write(to: fileURL, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.modificationDate: modifiedAt], ofItemAtPath: fileURL.path)
+
+        let details = try await client.detailsOfItem(at: fileURL)
+
+        XCTAssertEqual(details.name, "details.txt")
+        XCTAssertEqual(details.size, 7)
+        XCTAssertEqual(details.modifiedAt?.timeIntervalSince1970 ?? 0, modifiedAt.timeIntervalSince1970, accuracy: 1)
+        XCTAssertEqual(details.pathExtension, ".txt")
+        XCTAssertEqual(details.location, temporaryDirectory.standardizedFileURL.path)
+        XCTAssertTrue(details.isReadable)
+    }
+
     func testCreatesRenamesCopiesAndMovesFolder() async throws {
         let folder = try await client.createFolder(named: "Work", in: temporaryDirectory)
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.path))

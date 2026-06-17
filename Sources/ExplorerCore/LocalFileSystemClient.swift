@@ -41,6 +41,20 @@ public struct LocalFileSystemClient: FileSystemClient, @unchecked Sendable {
         }
     }
 
+    public func detailsOfItem(at url: URL) async throws -> FileItemDetails {
+        let itemURL = url.standardizedFileURL
+
+        guard fileManager.fileExists(atPath: itemURL.path) else {
+            throw ExplorerError.notFound(itemURL)
+        }
+
+        do {
+            return try FileItemDetails.make(url: itemURL, fileManager: fileManager)
+        } catch {
+            throw map(error, for: itemURL)
+        }
+    }
+
     public func createFolder(named name: String, in directory: URL) async throws -> URL {
         let trimmedName = normalizedName(name)
         let destination = availableURL(forName: trimmedName, in: directory, preservingExtension: false)

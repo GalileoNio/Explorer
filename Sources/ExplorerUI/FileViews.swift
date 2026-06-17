@@ -14,6 +14,7 @@ struct FileGridView: View {
     let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
+    let onDetails: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
     private let selectionCoordinateSpace = "FileGridSelection"
@@ -36,6 +37,7 @@ struct FileGridView: View {
                         iconSize: iconSize,
                         controller: controller,
                         onRename: onRename,
+                        onDetails: onDetails,
                         onTransfer: onTransfer
                     )
                     .background(FileItemFrameReader(url: item.url, coordinateSpaceName: selectionCoordinateSpace))
@@ -55,6 +57,7 @@ struct FileTile: View {
     let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
+    let onDetails: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
     var body: some View {
@@ -82,6 +85,7 @@ struct FileTile: View {
                 selectedURLs: controller.state.selectedURLs,
                 controller: controller,
                 onRename: onRename,
+                onDetails: onDetails,
                 onTransfer: onTransfer
             )
         }
@@ -167,6 +171,7 @@ struct FileListView: View {
     let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
+    let onDetails: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
     private let selectionCoordinateSpace = "FileListSelection"
@@ -182,6 +187,7 @@ struct FileListView: View {
                             iconSize: listIconSize,
                             controller: controller,
                             onRename: onRename,
+                            onDetails: onDetails,
                             onTransfer: onTransfer
                         )
                         .background(FileItemFrameReader(url: item.url, coordinateSpaceName: selectionCoordinateSpace))
@@ -194,6 +200,7 @@ struct FileListView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .fileDragSelection(coordinateSpaceName: selectionCoordinateSpace) { selectedURLs in
             controller.setSelectedURLs(selectedURLs)
         }
@@ -244,6 +251,7 @@ struct FileListRow: View {
     let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
+    let onDetails: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
     var body: some View {
@@ -307,6 +315,7 @@ struct FileListRow: View {
                 selectedURLs: controller.state.selectedURLs,
                 controller: controller,
                 onRename: onRename,
+                onDetails: onDetails,
                 onTransfer: onTransfer
             )
         }
@@ -502,11 +511,186 @@ private struct FileDragSelectionSurface: ViewModifier {
     }
 }
 
+struct FileInfoSheet: View {
+    let item: FileItem
+    let controller: ExplorerController
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var details: FileItemDetails?
+    @State private var errorMessage: String?
+    @State private var isLoading = true
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if isLoading {
+                    ProgressView("Loading Info")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let details {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            header(details)
+
+                            DetailSection("General") {
+                                DetailRow("Kind", details.displayType)
+                                DetailRow("Size", details.formattedSize)
+                                DetailRow("Allocated", details.formattedAllocatedSize)
+                                DetailRow("Extension", details.pathExtension)
+                                DetailRow("Location", details.location)
+                                DetailRow("Path", details.url.path)
+                                if let typeIdentifier = details.typeIdentifier {
+                                    DetailRow("Type Identifier", typeIdentifier)
+                                }
+                            }
+
+                            DetailSection("Dates") {
+                                DetailRow("Created", Self.dateText(details.createdAt))
+                                DetailRow("Modified", Self.dateText(details.modifiedAt))
+                                DetailRow("Last Opened", Self.dateText(details.accessedAt))
+                            }
+
+                            DetailSection("Access") {
+                                DetailRow("Readable", Self.booleanText(details.isReadable))
+                                DetailRow("Writable", Self.booleanText(details.isWritable))
+                                DetailRow("Executable", Self.booleanText(details.isExecutable))
+                                DetailRow("Hidden", Self.booleanText(details.isHidden))
+                                DetailRow("Owner", details.ownerAccountName ?? "--")
+                                DetailRow("Group", details.groupOwnerAccountName ?? "--")
+                                DetailRow("POSIX", details.formattedPOSIXPermissions)
+                            }
+                        }
+                        .padding(20)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                } else {
+                    ContentUnavailableView(
+                        "Unable to Load Info",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(errorMessage ?? "Explorer could not read this item.")
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .navigationTitle("Get Info")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        #if os(macOS)
+        .frame(minWidth: 460, idealWidth: 520, minHeight: 560)
+        #endif
+        .task(id: item.url) {
+            await loadDetails()
+        }
+    }
+
+    private func header(_ details: FileItemDetails) -> some View {
+        HStack(spacing: 14) {
+            FileIconView(item: item, size: 52)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(details.name)
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(2)
+                    .textSelection(.enabled)
+
+                Text(details.displayType)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    @MainActor
+    private func loadDetails() async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            details = try await controller.details(for: item)
+        } catch {
+            details = nil
+            if let explorerError = error as? ExplorerError {
+                errorMessage = explorerError.errorDescription
+            } else {
+                errorMessage = (error as NSError).localizedDescription
+            }
+        }
+
+        isLoading = false
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .medium
+        return formatter
+    }()
+
+    private static func dateText(_ date: Date?) -> String {
+        date.map(Self.dateFormatter.string(from:)) ?? "--"
+    }
+
+    private static func booleanText(_ value: Bool) -> String {
+        value ? "Yes" : "No"
+    }
+}
+
+private struct DetailSection<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(_ title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 7) {
+                content
+            }
+        }
+    }
+}
+
+private struct DetailRow: View {
+    let label: String
+    let value: String
+
+    init(_ label: String, _ value: String) {
+        self.label = label
+        self.value = value
+    }
+
+    var body: some View {
+        GridRow {
+            Text(label)
+                .foregroundStyle(.secondary)
+                .frame(width: 112, alignment: .leading)
+
+            Text(value)
+                .textSelection(.enabled)
+                .lineLimit(4)
+        }
+        .font(.callout)
+    }
+}
+
 struct FileActionMenu: View {
     let item: FileItem
     let selectedURLs: Set<URL>
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
+    let onDetails: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
     private var transferURLs: [URL] {
@@ -524,6 +708,10 @@ struct FileActionMenu: View {
 
         Button("Rename", systemImage: "pencil") {
             onRename(item)
+        }
+
+        Button("Get Info", systemImage: "info.circle") {
+            onDetails(item)
         }
 
         Button("Duplicate", systemImage: "plus.square.on.square") {

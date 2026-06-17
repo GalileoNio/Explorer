@@ -14,6 +14,7 @@ struct BrowserPane: View {
     @ObservedObject var controller: ExplorerController
 
     @State private var renameTarget: FileItem?
+    @State private var detailsTarget: FileItem?
     @State private var pendingTransfer: TransferRequest?
     @State private var isChoosingDestination = false
     @State private var isSearchExpanded = false
@@ -28,9 +29,10 @@ struct BrowserPane: View {
                     .padding(.vertical, 8)
             }
 
-            ZStack {
+            ZStack(alignment: .topLeading) {
                 if controller.isLoading {
                     ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .controlSize(.large)
                 } else if controller.visibleItems.isEmpty {
                     ContentUnavailableView(
@@ -38,8 +40,10 @@ struct BrowserPane: View {
                         systemImage: "folder",
                         description: Text(controller.state.searchQuery.isEmpty ? "This folder is empty." : "Try a different search.")
                     )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
                     content
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -101,6 +105,9 @@ struct BrowserPane: View {
                 controller.rename(item, to: name)
             }
         }
+        .sheet(item: $detailsTarget) { item in
+            FileInfoSheet(item: item, controller: controller)
+        }
     }
 
     private var navigationTitle: String {
@@ -123,6 +130,7 @@ struct BrowserPane: View {
                 iconSize: CGFloat(controller.state.iconSize),
                 controller: controller,
                 onRename: { renameTarget = $0 },
+                onDetails: { detailsTarget = $0 },
                 onTransfer: beginTransfer
             )
         case .list:
@@ -132,6 +140,7 @@ struct BrowserPane: View {
                 iconSize: CGFloat(controller.state.iconSize),
                 controller: controller,
                 onRename: { renameTarget = $0 },
+                onDetails: { detailsTarget = $0 },
                 onTransfer: beginTransfer
             )
         }
