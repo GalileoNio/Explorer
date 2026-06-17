@@ -6,7 +6,7 @@ struct PlacesSidebar: View {
     @ObservedObject var controller: ExplorerController
     @State private var isChoosingFolder = false
     @State private var detailsTarget: FileItem?
-    @State private var sidebarSelection: URL?
+    @State private var sidebarSelection: String?
 
     private let places = DefaultPlaces.primaryPlaces()
 
@@ -17,7 +17,7 @@ struct PlacesSidebar: View {
                     placeRow(
                         title: place.title,
                         symbol: place.systemImageName,
-                        url: place.url
+                        target: place.target
                     )
                 }
             }
@@ -28,7 +28,7 @@ struct PlacesSidebar: View {
                         placeRow(
                             title: root.title,
                             symbol: "folder.badge.person.crop",
-                            url: root.url,
+                            target: .directory(root.url),
                             isAuthorized: true,
                             onRemove: {
                                 controller.removeAuthorizedRoot(root)
@@ -79,24 +79,25 @@ struct PlacesSidebar: View {
     private func placeRow(
         title: String,
         symbol: String,
-        url: URL,
+        target: PlaceTarget,
         isAuthorized: Bool = false,
         onRemove: (() -> Void)? = nil
     ) -> some View {
-        let standardizedURL = url.standardizedFileURL
+        let selectionID = target.navigationURL.absoluteString
 
         return Label(title, systemImage: symbol)
             .foregroundStyle(.primary, .secondary)
-            .tag(standardizedURL)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tag(selectionID)
             .contentShape(Rectangle())
             .onTapGesture {
-                sidebarSelection = standardizedURL
-                controller.navigate(to: standardizedURL)
+                sidebarSelection = selectionID
+                controller.navigate(to: target.navigationURL)
             }
             .contextMenu {
                 PlaceActionMenu(
                     title: title,
-                    url: url,
+                    target: target,
                     isAuthorized: isAuthorized,
                     controller: controller,
                     onDetails: { detailsTarget = $0 },
@@ -106,22 +107,40 @@ struct PlacesSidebar: View {
     }
 
     private func syncSidebarSelection() {
-        sidebarSelection = selectedSidebarURL(for: controller.state.currentURL)
+        sidebarSelection = selectedSidebarPlaceID(for: controller.state.currentURL)
     }
 
-    private func selectedSidebarURL(for url: URL) -> URL? {
-        let candidates = (places.map(\.url) + controller.authorizedRoots.map(\.url))
-            .map(\.standardizedFileURL)
+    private func selectedSidebarPlaceID(for url: URL) -> String? {
+        if !url.isFileURL {
+            return places.first { $0.target.navigationURL == url }?.id
+        }
+
+        let placeCandidates: [(id: String, fileURL: URL?)] = places.map { place in
+            (place.id, place.target.fileURL)
+        }
+        let authorizedCandidates: [(id: String, fileURL: URL?)] = controller.authorizedRoots.map { root in
+            let standardizedURL = root.url.standardizedFileURL
+            return (standardizedURL.absoluteString, standardizedURL)
+        }
+        let candidates = placeCandidates + authorizedCandidates
         let currentPath = url.standardizedFileURL.path
 
         return candidates
-            .filter { candidate in
+            .compactMap { id, fileURL -> (String, URL)? in
+                guard let fileURL else {
+                    return nil
+                }
+
+                return (id, fileURL)
+            }
+            .filter { _, candidate in
                 currentPath == candidate.path
                     || candidate.path == "/"
                     || currentPath.hasPrefix(candidate.path + "/")
             }
             .max { left, right in
-                left.path.count < right.path.count
-            }
+                left.1.path.count < right.1.path.count
+            }?
+            .0
     }
 }

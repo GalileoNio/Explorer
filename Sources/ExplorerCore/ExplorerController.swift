@@ -1,6 +1,10 @@
 import Combine
 import Foundation
 
+#if os(macOS)
+import AppKit
+#endif
+
 @MainActor
 public final class ExplorerController: ObservableObject {
     @Published public private(set) var state: ExplorerNavigationState
@@ -37,7 +41,27 @@ public final class ExplorerController: ObservableObject {
     }
 
     public var isCurrentDirectoryWritable: Bool {
-        FileManager.default.isWritableFile(atPath: state.currentURL.path)
+        guard state.currentURL.isFileURL else {
+            return false
+        }
+
+        return FileManager.default.isWritableFile(atPath: state.currentURL.path)
+    }
+
+    public var currentLocationTitle: String {
+        if let virtualLocation = ExplorerVirtualLocation.location(for: state.currentURL) {
+            return virtualLocation.title
+        }
+
+        return state.currentURL.lastPathComponent.isEmpty ? state.currentURL.path : state.currentURL.lastPathComponent
+    }
+
+    public var currentLocationSystemImageName: String {
+        if let virtualLocation = ExplorerVirtualLocation.location(for: state.currentURL) {
+            return virtualLocation.systemImageName
+        }
+
+        return "folder"
     }
 
     public func start() {
@@ -53,6 +77,11 @@ public final class ExplorerController: ObservableObject {
         isLoading = true
         let targetURL = state.currentURL
         let includeHidden = state.showHiddenFiles
+
+        if let virtualLocation = ExplorerVirtualLocation.location(for: targetURL) {
+            loadVirtualLocation(virtualLocation, targetURL: targetURL, includeHidden: includeHidden)
+            return
+        }
 
         Task {
             do {
@@ -76,15 +105,23 @@ public final class ExplorerController: ObservableObject {
     }
 
     public func navigate(to url: URL) {
-        rootStore.roots.first(where: { url.path.hasPrefix($0.url.path) }).map {
-            _ = rootStore.startAccessing($0)
+        let navigationURL = normalizedNavigationURL(url)
+
+        if navigationURL.isFileURL {
+            rootStore.roots.first(where: { navigationURL.path.hasPrefix($0.url.path) }).map {
+                _ = rootStore.startAccessing($0)
+            }
         }
 
-        state.navigate(to: url.standardizedFileURL)
+        state.navigate(to: navigationURL)
         loadCurrentDirectory()
     }
 
     public func navigateUp() {
+        guard state.currentURL.isFileURL else {
+            return
+        }
+
         let parent = state.currentURL.deletingLastPathComponent()
         guard parent != state.currentURL else {
             return
@@ -191,6 +228,10 @@ public final class ExplorerController: ObservableObject {
     }
 
     public func createFolder() {
+        guard state.currentURL.isFileURL else {
+            return
+        }
+
         Task {
             do {
                 let newURL = try await fileSystem.createFolder(named: "Untitled Folder", in: state.currentURL)
@@ -244,6 +285,10 @@ public final class ExplorerController: ObservableObject {
     }
 
     public func copyItems(_ urls: [URL], to destination: URL) {
+        guard destination.isFileURL else {
+            return
+        }
+
         Task {
             do {
                 let copiedURLs = try await fileSystem.copyItems(urls, to: destination)
@@ -256,6 +301,10 @@ public final class ExplorerController: ObservableObject {
     }
 
     public func moveItems(_ urls: [URL], to destination: URL) {
+        guard destination.isFileURL else {
+            return
+        }
+
         Task {
             do {
                 let movedURLs = try await fileSystem.moveItems(urls, to: destination)
@@ -304,5 +353,71 @@ public final class ExplorerController: ObservableObject {
 
     public func clearError() {
         errorMessage = nil
+    }
+
+    private func loadVirtualLocation(
+        _ virtualLocation: ExplorerVirtualLocation,
+        targetURL: URL,
+        includeHidden: Bool
+    ) {
+        Task {
+            let items = Self.items(for: virtualLocation, includeHidden: includeHidden)
+            guard self.state.currentURL == targetURL else {
+                return
+            }
+
+            self.snapshot = DirectorySnapshot(url: targetURL, items: items)
+            self.isLoading = false
+        }
+    }
+
+    private static func items(for virtualLocation: ExplorerVirtualLocation, includeHidden: Bool) -> [FileItem] {
+        switch virtualLocation {
+        case .recents:
+            return SystemRecentItems.urls()
+                .reduce(into: [URL]()) { urls, url in
+                    let standardizedURL = normalizedNavigationURL(url)
+                    guard standardizedURL.isFileURL, !urls.contains(standardizedURL) else {
+                        return
+                    }
+
+                    urls.append(standardizedURL)
+                }
+                .compactMap { url in
+                    (try? FileItem.make(url: url)) ?? FileItem.fallback(url: url)
+                }
+                .filter { includeHidden || !$0.isHidden }
+        }
+    }
+
+    private static func normalizedNavigationURL(_ url: URL) -> URL {
+        url.isFileURL ? url.standardizedFileURL : url
+    }
+
+    private func normalizedNavigationURL(_ url: URL) -> URL {
+        Self.normalizedNavigationURL(url)
+    }
+}
+
+@MainActor
+public enum SystemRecentItems {
+    public static func urls() -> [URL] {
+        #if os(macOS)
+        NSDocumentController.shared.recentDocumentURLs
+            .filter(\.isFileURL)
+            .map(\.standardizedFileURL)
+        #else
+        []
+        #endif
+    }
+
+    public static func note(_ url: URL) {
+        guard url.isFileURL else {
+            return
+        }
+
+        #if os(macOS)
+        NSDocumentController.shared.noteNewRecentDocumentURL(url.standardizedFileURL)
+        #endif
     }
 }

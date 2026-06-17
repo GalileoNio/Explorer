@@ -33,7 +33,7 @@ public struct FileActionContext: Equatable, Sendable {
         clipboardOperation: ClipboardOperation? = nil,
         isCurrentDirectoryWritable: Bool = true
     ) {
-        self.currentDirectory = currentDirectory.standardizedFileURL
+        self.currentDirectory = currentDirectory.isFileURL ? currentDirectory.standardizedFileURL : currentDirectory
         self.clickedItem = clickedItem
         self.selectedItems = selectedItems
         self.visibleItemCount = visibleItemCount

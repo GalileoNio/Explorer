@@ -1,3 +1,4 @@
+import ExplorerCore
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
@@ -26,6 +27,7 @@ enum PlatformFileServices {
     static func openItems(_ urls: [URL]) {
         #if os(macOS)
         for url in urls {
+            SystemRecentItems.note(url)
             NSWorkspace.shared.open(url)
         }
         #elseif os(iOS)

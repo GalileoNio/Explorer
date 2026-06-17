@@ -1,3 +1,4 @@
+import ExplorerCore
 import SwiftUI
 
 struct PathBar: View {
@@ -38,13 +39,30 @@ struct PathBar: View {
 
     @ViewBuilder
     private var pathBarContent: some View {
-        if isEditingPath {
+        if let virtualLocation = ExplorerVirtualLocation.location(for: currentURL) {
+            virtualPath(virtualLocation)
+                .transition(.opacity)
+        } else if isEditingPath {
             editablePath
                 .transition(.opacity.combined(with: .move(edge: .top)))
         } else {
             breadcrumbPath
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
         }
+    }
+
+    private func virtualPath(_ location: ExplorerVirtualLocation) -> some View {
+        HStack(spacing: 8) {
+            Label(location.title, systemImage: location.systemImageName)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+        }
+        .font(.callout)
+        .foregroundStyle(.primary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
     }
 
     private var breadcrumbPath: some View {

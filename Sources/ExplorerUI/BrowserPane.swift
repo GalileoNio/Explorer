@@ -36,9 +36,9 @@ struct BrowserPane: View {
                         .controlSize(.large)
                 } else if controller.visibleItems.isEmpty {
                     ContentUnavailableView(
-                        controller.state.searchQuery.isEmpty ? "No files" : "No matches",
-                        systemImage: "folder",
-                        description: Text(controller.state.searchQuery.isEmpty ? "This folder is empty." : "Try a different search.")
+                        emptyContentTitle,
+                        systemImage: controller.currentLocationSystemImageName,
+                        description: Text(emptyContentDescription)
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
@@ -117,7 +117,31 @@ struct BrowserPane: View {
     }
 
     private var navigationTitle: String {
-        controller.state.currentURL.lastPathComponent.isEmpty ? controller.state.currentURL.path : controller.state.currentURL.lastPathComponent
+        controller.currentLocationTitle
+    }
+
+    private var emptyContentTitle: String {
+        if !controller.state.searchQuery.isEmpty {
+            return "No matches"
+        }
+
+        if ExplorerVirtualLocation.location(for: controller.state.currentURL) == .recents {
+            return "No Recent Items"
+        }
+
+        return "No files"
+    }
+
+    private var emptyContentDescription: String {
+        if !controller.state.searchQuery.isEmpty {
+            return "Try a different search."
+        }
+
+        if ExplorerVirtualLocation.location(for: controller.state.currentURL) == .recents {
+            return "Files opened from Explorer will appear here."
+        }
+
+        return "This folder is empty."
     }
 
     private func pathBar() -> some View {
@@ -174,6 +198,7 @@ struct BrowserPane: View {
             } label: {
                 Label("Up", systemImage: "chevron.up")
             }
+            .disabled(!controller.state.currentURL.isFileURL)
         }
 
         if pathBarInTitleBar {
@@ -233,6 +258,7 @@ struct BrowserPane: View {
                 Label("New Folder", systemImage: "folder.badge.plus")
             }
             .help("New Folder")
+            .disabled(!controller.isCurrentDirectoryWritable)
         }
     }
 
@@ -368,6 +394,10 @@ struct BrowserPane: View {
     }
 
     private func pasteIntoCurrentDirectory() {
+        guard controller.state.currentURL.isFileURL else {
+            return
+        }
+
         FileActionPerformer.paste(
             context: FileActionPerformer.context(controller: controller, selectedItems: []),
             controller: controller
@@ -387,6 +417,10 @@ struct BrowserPane: View {
     }
 
     private func handleDrop(_ providers: [NSItemProvider], destination: URL) -> Bool {
+        guard destination.isFileURL else {
+            return false
+        }
+
         let matchingProviders = providers.filter {
             $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
         }

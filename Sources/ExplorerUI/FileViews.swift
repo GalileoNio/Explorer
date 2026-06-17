@@ -67,18 +67,19 @@ struct FileTile: View {
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .frame(maxWidth: .infinity, minHeight: 32, alignment: .top)
+                .frame(width: labelWidth, height: 32, alignment: .top)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(selectionBackground)
         }
-        .padding(6)
         .frame(width: tileWidth, height: tileHeight)
-        .background(selectionBackground)
-        .contentShape(RoundedRectangle(cornerRadius: 8))
-        .onTapGesture {
+        .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture(count: 1).onEnded {
             controller.select(item)
-        }
-        .onTapGesture(count: 2) {
+        })
+        .simultaneousGesture(TapGesture(count: 2).onEnded {
             openOrNavigate(item)
-        }
+        })
         .contextMenu {
             FileActionMenu(
                 item: item,
@@ -102,10 +103,10 @@ struct FileTile: View {
     }
 
     private var selectionBackground: some View {
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: 5)
             .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.clear)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 5)
                     .stroke(isSelected ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
             )
     }
@@ -116,6 +117,10 @@ struct FileTile: View {
 
     private var tileHeight: CGFloat {
         max(104, iconSize * 1.25 + 50)
+    }
+
+    private var labelWidth: CGFloat {
+        min(tileWidth - 24, max(iconSize * 1.35, 74))
     }
 
     private func openOrNavigate(_ item: FileItem) {
@@ -274,6 +279,10 @@ struct FileListRow: View {
                 }
             }
             .frame(width: FileListColumns.name, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
+            )
 
             Text(Self.dateText(item.modifiedAt))
                 .lineLimit(1)
@@ -298,17 +307,13 @@ struct FileListRow: View {
         .font(.subheadline)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
-        )
         .contentShape(Rectangle())
-        .onTapGesture {
+        .simultaneousGesture(TapGesture(count: 1).onEnded {
             controller.select(item)
-        }
-        .onTapGesture(count: 2) {
+        })
+        .simultaneousGesture(TapGesture(count: 2).onEnded {
             openOrNavigate(item)
-        }
+        })
         .contextMenu {
             FileActionMenu(
                 item: item,

@@ -248,18 +248,20 @@ struct FileBackgroundActionMenu: View {
 
         Divider()
 
-        Button("Get Info", systemImage: "info.circle") {
-            onDetails(currentFolderItem)
-        }
+        if controller.state.currentURL.isFileURL {
+            Button("Get Info", systemImage: "info.circle") {
+                onDetails(currentFolderItem)
+            }
 
-        #if os(macOS)
-        Button("Reveal in Finder", systemImage: "finder") {
-            PlatformFileServices.reveal(controller.state.currentURL)
-        }
-        #endif
+            #if os(macOS)
+            Button("Reveal in Finder", systemImage: "finder") {
+                PlatformFileServices.reveal(controller.state.currentURL)
+            }
+            #endif
 
-        Button("Copy Current Folder Path", systemImage: "doc.on.doc") {
-            PlatformFileServices.copyTextToPasteboard(controller.state.currentURL.path)
+            Button("Copy Current Folder Path", systemImage: "doc.on.doc") {
+                PlatformFileServices.copyTextToPasteboard(controller.state.currentURL.path)
+            }
         }
     }
 
@@ -297,7 +299,7 @@ struct FileBackgroundActionMenu: View {
 
 struct PlaceActionMenu: View {
     let title: String
-    let url: URL
+    let target: PlaceTarget
     let isAuthorized: Bool
     let controller: ExplorerController
     let onDetails: (FileItem) -> Void
@@ -305,22 +307,24 @@ struct PlaceActionMenu: View {
 
     var body: some View {
         Button("Open", systemImage: "folder") {
-            controller.navigate(to: url)
+            controller.navigate(to: target.navigationURL)
         }
 
-        Button("Get Info", systemImage: "info.circle") {
-            onDetails(placeItem)
-        }
+        if let fileURL = target.fileURL {
+            Button("Get Info", systemImage: "info.circle") {
+                onDetails(placeItem(for: fileURL))
+            }
 
-        Button("Copy Path", systemImage: "doc.on.doc") {
-            PlatformFileServices.copyTextToPasteboard(url.path)
-        }
+            Button("Copy Path", systemImage: "doc.on.doc") {
+                PlatformFileServices.copyTextToPasteboard(fileURL.path)
+            }
 
-        #if os(macOS)
-        Button("Reveal in Finder", systemImage: "finder") {
-            PlatformFileServices.reveal(url)
+            #if os(macOS)
+            Button("Reveal in Finder", systemImage: "finder") {
+                PlatformFileServices.reveal(fileURL)
+            }
+            #endif
         }
-        #endif
 
         if isAuthorized, let onRemove {
             Divider()
@@ -331,7 +335,7 @@ struct PlaceActionMenu: View {
         }
     }
 
-    private var placeItem: FileItem {
+    private func placeItem(for url: URL) -> FileItem {
         (try? FileItem.make(url: url)) ?? FileItem.fallback(url: url)
     }
 }
