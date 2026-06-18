@@ -20,16 +20,16 @@ struct FileGridView: View {
     private let selectionCoordinateSpace = "FileGridSelection"
 
     private var columns: [GridItem] {
-        [GridItem(.adaptive(minimum: tileWidth, maximum: tileWidth + 28), spacing: 8)]
+        [GridItem(.adaptive(minimum: tileWidth, maximum: tileWidth + 16), spacing: FileGridMetrics.columnSpacing)]
     }
 
     private var tileWidth: CGFloat {
-        max(112, min(iconSize * 2.25, 176))
+        FileGridMetrics.tileWidth(for: iconSize)
     }
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: columns, alignment: .leading, spacing: FileGridMetrics.rowSpacing) {
                 ForEach(items) { item in
                     FileTile(
                         item: item,
@@ -43,11 +43,30 @@ struct FileGridView: View {
                     .background(FileItemFrameReader(url: item.url, coordinateSpaceName: selectionCoordinateSpace))
                 }
             }
-            .padding(10)
+            .padding(FileGridMetrics.contentPadding)
         }
         .fileDragSelection(coordinateSpaceName: selectionCoordinateSpace) { selectedURLs in
             controller.setSelectedURLs(selectedURLs)
         }
+    }
+}
+
+private enum FileGridMetrics {
+    static let columnSpacing: CGFloat = 4
+    static let rowSpacing: CGFloat = 4
+    static let contentPadding: CGFloat = 8
+    static let iconLabelSpacing: CGFloat = 4
+
+    static func tileWidth(for iconSize: CGFloat) -> CGFloat {
+        max(96, min(iconSize * 1.9, 150))
+    }
+
+    static func tileHeight(for iconSize: CGFloat) -> CGFloat {
+        max(94, iconSize * 1.18 + 44)
+    }
+
+    static func labelWidth(for iconSize: CGFloat, tileWidth: CGFloat) -> CGFloat {
+        min(tileWidth - 12, max(iconSize * 1.5, 76))
     }
 }
 
@@ -61,7 +80,7 @@ struct FileTile: View {
     let onTransfer: (TransferRequest) -> Void
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: FileGridMetrics.iconLabelSpacing) {
             FileIconView(item: item, size: iconSize)
             Text(item.name)
                 .font(.caption)
@@ -70,9 +89,14 @@ struct FileTile: View {
                 .frame(width: labelWidth, height: 32, alignment: .top)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
-                .background(selectionBackground)
         }
         .frame(width: tileWidth, height: tileHeight)
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(.selection)
+            }
+        }
         .contentShape(Rectangle())
         .simultaneousGesture(TapGesture(count: 1).onEnded {
             controller.select(item)
@@ -102,25 +126,16 @@ struct FileTile: View {
         }
     }
 
-    private var selectionBackground: some View {
-        RoundedRectangle(cornerRadius: 5)
-            .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.clear)
-            .overlay(
-                RoundedRectangle(cornerRadius: 5)
-                    .stroke(isSelected ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
-            )
-    }
-
     private var tileWidth: CGFloat {
-        max(112, min(iconSize * 2.25, 176))
+        FileGridMetrics.tileWidth(for: iconSize)
     }
 
     private var tileHeight: CGFloat {
-        max(104, iconSize * 1.25 + 50)
+        FileGridMetrics.tileHeight(for: iconSize)
     }
 
     private var labelWidth: CGFloat {
-        min(tileWidth - 24, max(iconSize * 1.35, 74))
+        FileGridMetrics.labelWidth(for: iconSize, tileWidth: tileWidth)
     }
 
     private func openOrNavigate(_ item: FileItem) {
@@ -179,40 +194,42 @@ struct FileListView: View {
     let onDetails: (FileItem) -> Void
     let onTransfer: (TransferRequest) -> Void
 
-    private let selectionCoordinateSpace = "FileListSelection"
-
     var body: some View {
-        ScrollView([.horizontal, .vertical]) {
-            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                Section {
-                    ForEach(items) { item in
-                        FileListRow(
-                            item: item,
-                            isSelected: selectedURLs.contains(item.url),
-                            iconSize: listIconSize,
-                            controller: controller,
-                            onRename: onRename,
-                            onDetails: onDetails,
-                            onTransfer: onTransfer
-                        )
-                        .background(FileItemFrameReader(url: item.url, coordinateSpaceName: selectionCoordinateSpace))
+        GeometryReader { proxy in
+            ScrollView(.horizontal) {
+                List(selection: selection) {
+                    Section {
+                        ForEach(items) { item in
+                            FileListRow(
+                                item: item,
+                                iconSize: listIconSize,
+                                controller: controller,
+                                onRename: onRename,
+                                onDetails: onDetails,
+                                onTransfer: onTransfer
+                            )
+                            .tag(item.url)
+                        }
+                    } header: {
+                        FileListHeader()
                     }
-                } header: {
-                    FileListHeader()
                 }
+                .listStyle(.plain)
+                .frame(width: max(proxy.size.width, FileListColumns.totalWidth), height: proxy.size.height)
             }
-            .frame(minWidth: FileListColumns.totalWidth, alignment: .leading)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .fileDragSelection(coordinateSpaceName: selectionCoordinateSpace) { selectedURLs in
-            controller.setSelectedURLs(selectedURLs)
-        }
     }
 
     private var listIconSize: CGFloat {
         min(max(iconSize * 0.42, 16), 26)
+    }
+
+    private var selection: Binding<Set<URL>> {
+        Binding(
+            get: { selectedURLs },
+            set: { controller.setSelectedURLs($0) }
+        )
     }
 }
 
@@ -252,7 +269,6 @@ struct FileListHeader: View {
 
 struct FileListRow: View {
     let item: FileItem
-    let isSelected: Bool
     let iconSize: CGFloat
     let controller: ExplorerController
     let onRename: (FileItem) -> Void
@@ -279,10 +295,6 @@ struct FileListRow: View {
                 }
             }
             .frame(width: FileListColumns.name, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 5)
-                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
-            )
 
             Text(Self.dateText(item.modifiedAt))
                 .lineLimit(1)
@@ -308,9 +320,6 @@ struct FileListRow: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .contentShape(Rectangle())
-        .simultaneousGesture(TapGesture(count: 1).onEnded {
-            controller.select(item)
-        })
         .simultaneousGesture(TapGesture(count: 2).onEnded {
             openOrNavigate(item)
         })

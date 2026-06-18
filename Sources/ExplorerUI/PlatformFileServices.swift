@@ -74,6 +74,12 @@ enum PlatformFileServices {
         #endif
     }
 
+    static func ejectVolume(_ url: URL) throws {
+        #if os(macOS)
+        try NSWorkspace.shared.unmountAndEjectDevice(at: url)
+        #endif
+    }
+
     static func quickLookItems(_ urls: [URL]) {
         guard !urls.isEmpty else {
             return

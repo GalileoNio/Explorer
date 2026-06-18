@@ -64,22 +64,37 @@ public struct Place: Identifiable, Hashable, Sendable {
     public let target: PlaceTarget
     public let systemImageName: String
     public let category: PlaceCategory
+    public let isEjectable: Bool
 
-    public init(title: String, url: URL, systemImageName: String, category: PlaceCategory) {
+    public init(
+        title: String,
+        url: URL,
+        systemImageName: String,
+        category: PlaceCategory,
+        isEjectable: Bool = false
+    ) {
         let target = PlaceTarget.directory(url)
         self.id = target.navigationURL.absoluteString
         self.title = title
         self.target = target
         self.systemImageName = systemImageName
         self.category = category
+        self.isEjectable = isEjectable
     }
 
-    public init(title: String, target: PlaceTarget, systemImageName: String, category: PlaceCategory) {
+    public init(
+        title: String,
+        target: PlaceTarget,
+        systemImageName: String,
+        category: PlaceCategory,
+        isEjectable: Bool = false
+    ) {
         self.id = target.navigationURL.absoluteString
         self.title = title
         self.target = target
         self.systemImageName = systemImageName
         self.category = category
+        self.isEjectable = isEjectable
     }
 
     public var url: URL {
@@ -188,7 +203,8 @@ public enum DefaultPlaces {
                 title: title.isEmpty ? volumeURL.path : title,
                 url: volumeURL,
                 systemImageName: "externaldrive",
-                category: .system
+                category: .system,
+                isEjectable: true
             )
         }
     }

@@ -300,9 +300,11 @@ struct FileBackgroundActionMenu: View {
 struct PlaceActionMenu: View {
     let title: String
     let target: PlaceTarget
+    let isEjectable: Bool
     let isAuthorized: Bool
     let controller: ExplorerController
     let onDetails: (FileItem) -> Void
+    let onEject: () -> Void
     let onRemove: (() -> Void)?
 
     var body: some View {
@@ -324,6 +326,12 @@ struct PlaceActionMenu: View {
                 PlatformFileServices.reveal(fileURL)
             }
             #endif
+
+            if isEjectable {
+                Button("Eject", systemImage: "eject") {
+                    onEject()
+                }
+            }
         }
 
         if isAuthorized, let onRemove {

@@ -7,18 +7,13 @@ struct PlacesSidebar: View {
     @State private var isChoosingFolder = false
     @State private var detailsTarget: FileItem?
     @State private var sidebarSelection: String?
-
-    private let places = DefaultPlaces.primaryPlaces()
+    @State private var places = DefaultPlaces.primaryPlaces()
 
     var body: some View {
         List(selection: $sidebarSelection) {
             Section("Places") {
                 ForEach(places) { place in
-                    placeRow(
-                        title: place.title,
-                        symbol: place.systemImageName,
-                        target: place.target
-                    )
+                    placeRow(place)
                 }
             }
 
@@ -49,6 +44,7 @@ struct PlacesSidebar: View {
         .listStyle(.sidebar)
         .navigationTitle("Explorer")
         .onAppear {
+            reloadPlaces()
             syncSidebarSelection()
         }
         .onChange(of: controller.state.currentURL) {
@@ -77,17 +73,47 @@ struct PlacesSidebar: View {
     }
 
     private func placeRow(
+        _ place: Place,
+        isAuthorized: Bool = false,
+        onRemove: (() -> Void)? = nil
+    ) -> some View {
+        placeRow(
+            title: place.title,
+            symbol: place.systemImageName,
+            target: place.target,
+            isEjectable: place.isEjectable,
+            isAuthorized: isAuthorized,
+            onRemove: onRemove
+        )
+    }
+
+    private func placeRow(
         title: String,
         symbol: String,
         target: PlaceTarget,
+        isEjectable: Bool = false,
         isAuthorized: Bool = false,
         onRemove: (() -> Void)? = nil
     ) -> some View {
         let selectionID = target.navigationURL.absoluteString
 
-        return Label(title, systemImage: symbol)
-            .foregroundStyle(.primary, .secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        return HStack(spacing: 8) {
+            Label(title, systemImage: symbol)
+                .foregroundStyle(.primary, .secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if isEjectable, let fileURL = target.fileURL {
+                Button {
+                    ejectVolume(fileURL)
+                } label: {
+                    Label("Eject", systemImage: "eject")
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .help("Eject")
+            }
+        }
             .tag(selectionID)
             .contentShape(Rectangle())
             .onTapGesture {
@@ -98,12 +124,35 @@ struct PlacesSidebar: View {
                 PlaceActionMenu(
                     title: title,
                     target: target,
+                    isEjectable: isEjectable,
                     isAuthorized: isAuthorized,
                     controller: controller,
                     onDetails: { detailsTarget = $0 },
+                    onEject: {
+                        if let fileURL = target.fileURL {
+                            ejectVolume(fileURL)
+                        }
+                    },
                     onRemove: onRemove
                 )
             }
+    }
+
+    private func reloadPlaces() {
+        places = DefaultPlaces.primaryPlaces()
+    }
+
+    private func ejectVolume(_ url: URL) {
+        do {
+            try PlatformFileServices.ejectVolume(url)
+            reloadPlaces()
+
+            if controller.state.currentURL.isFileURL, controller.state.currentURL.path.hasPrefix(url.path) {
+                controller.navigate(to: ExplorerDefaultRoot.url)
+            }
+        } catch {
+            controller.present(error)
+        }
     }
 
     private func syncSidebarSelection() {
