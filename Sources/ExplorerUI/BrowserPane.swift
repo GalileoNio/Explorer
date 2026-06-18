@@ -87,24 +87,28 @@ struct BrowserPane: View {
             guard let transfer = pendingTransfer else {
                 return
             }
+            defer {
+                pendingTransfer = nil
+            }
 
             switch result {
             case .success(let urls):
                 guard let destination = urls.first else {
                     return
                 }
+                let authorizedDestination = controller.addAuthorizedRoot(destination).url
 
                 switch transfer.operation {
                 case .copy:
-                    controller.copyItems(transfer.urls, to: destination)
+                    controller.copyItems(transfer.urls, to: authorizedDestination)
                 case .move:
-                    controller.moveItems(transfer.urls, to: destination)
+                    controller.moveItems(transfer.urls, to: authorizedDestination)
                 }
             case .failure(let error):
-                controller.present(error)
+                if !isUserCancelled(error) {
+                    controller.present(error)
+                }
             }
-
-            pendingTransfer = nil
         }
         .sheet(item: $renameTarget) { item in
             RenameSheet(item: item) { name in
@@ -456,6 +460,11 @@ struct BrowserPane: View {
         }
 
         return true
+    }
+
+    private func isUserCancelled(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError
     }
 }
 

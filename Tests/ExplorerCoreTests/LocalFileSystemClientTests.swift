@@ -94,4 +94,41 @@ final class LocalFileSystemClientTests: XCTestCase {
         XCTAssertEqual(Set(duplicates.map(\.lastPathComponent)), ["first copy.txt", "second copy.txt"])
         XCTAssertTrue(duplicates.allSatisfy { FileManager.default.fileExists(atPath: $0.path) })
     }
+
+    @MainActor
+    func testAuthorizedFolderMatchesDescendantsByPathBoundary() throws {
+        let defaults = try makeTemporaryDefaults()
+        let store = AuthorizedRootStore(defaults: defaults)
+        let folderURL = temporaryDirectory.appendingPathComponent("Authorized")
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: false)
+
+        let root = store.add(url: folderURL)
+        let childURL = folderURL.appendingPathComponent("child.txt")
+        let siblingURL = URL(fileURLWithPath: folderURL.path + "-sibling")
+
+        XCTAssertEqual(root.kind, .folder)
+        XCTAssertEqual(store.root(containing: childURL)?.url, folderURL.standardizedFileURL)
+        XCTAssertNil(store.root(containing: siblingURL))
+    }
+
+    @MainActor
+    func testAuthorizedFileMatchesOnlyItself() throws {
+        let defaults = try makeTemporaryDefaults()
+        let store = AuthorizedRootStore(defaults: defaults)
+        let fileURL = temporaryDirectory.appendingPathComponent("authorized.txt")
+        try "access".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let root = store.add(url: fileURL)
+
+        XCTAssertEqual(root.kind, .file)
+        XCTAssertEqual(store.root(containing: fileURL)?.url, fileURL.standardizedFileURL)
+        XCTAssertNil(store.root(containing: temporaryDirectory.appendingPathComponent("other.txt")))
+    }
+
+    private func makeTemporaryDefaults() throws -> UserDefaults {
+        let suiteName = "ExplorerTests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        return defaults
+    }
 }

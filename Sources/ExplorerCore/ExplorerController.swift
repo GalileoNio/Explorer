@@ -5,12 +5,27 @@ import Foundation
 import AppKit
 #endif
 
+public struct FileAccessRequest: Identifiable, Equatable, Sendable {
+    public let id = UUID()
+    public let url: URL
+
+    public var title: String {
+        let lastPathComponent = url.lastPathComponent
+        return lastPathComponent.isEmpty ? url.path : lastPathComponent
+    }
+
+    public init(url: URL) {
+        self.url = url.isFileURL ? url.standardizedFileURL : url
+    }
+}
+
 @MainActor
 public final class ExplorerController: ObservableObject {
     @Published public private(set) var state: ExplorerNavigationState
     @Published public private(set) var snapshot: DirectorySnapshot?
     @Published public private(set) var isLoading = false
     @Published public private(set) var errorMessage: String?
+    @Published public private(set) var accessRequest: FileAccessRequest?
     @Published public private(set) var authorizedRoots: [AuthorizedRoot]
     @Published public private(set) var clipboardOperation: ClipboardOperation?
 
@@ -107,11 +122,7 @@ public final class ExplorerController: ObservableObject {
     public func navigate(to url: URL) {
         let navigationURL = normalizedNavigationURL(url)
 
-        if navigationURL.isFileURL {
-            rootStore.roots.first(where: { navigationURL.path.hasPrefix($0.url.path) }).map {
-                _ = rootStore.startAccessing($0)
-            }
-        }
+        startAccessingAuthorizedRoot(containing: navigationURL)
 
         state.navigate(to: navigationURL)
         loadCurrentDirectory()
@@ -216,10 +227,28 @@ public final class ExplorerController: ObservableObject {
         try await fileSystem.detailsOfItem(at: item.url)
     }
 
-    public func addAuthorizedRoot(_ url: URL) {
+    @discardableResult
+    public func addAuthorizedRoot(_ url: URL) -> AuthorizedRoot {
         let root = rootStore.add(url: url)
         _ = rootStore.startAccessing(root)
         authorizedRoots = rootStore.roots
+        return root
+    }
+
+    @discardableResult
+    public func startAccessing(_ root: AuthorizedRoot) -> Bool {
+        rootStore.startAccessing(root)
+    }
+
+    public func authorizeAccess(to url: URL) {
+        let root = addAuthorizedRoot(url)
+        clearError()
+
+        if root.isDirectory {
+            navigate(to: root.url)
+        } else {
+            revealAuthorizedFile(root)
+        }
     }
 
     public func removeAuthorizedRoot(_ root: AuthorizedRoot) {
@@ -346,6 +375,9 @@ public final class ExplorerController: ObservableObject {
     public func present(_ error: Error) {
         if let explorerError = error as? ExplorerError {
             errorMessage = explorerError.errorDescription
+            if case .permissionDenied(let url) = explorerError {
+                accessRequest = FileAccessRequest(url: url)
+            }
         } else {
             errorMessage = (error as NSError).localizedDescription
         }
@@ -353,6 +385,7 @@ public final class ExplorerController: ObservableObject {
 
     public func clearError() {
         errorMessage = nil
+        accessRequest = nil
     }
 
     private func loadVirtualLocation(
@@ -396,6 +429,26 @@ public final class ExplorerController: ObservableObject {
 
     private func normalizedNavigationURL(_ url: URL) -> URL {
         Self.normalizedNavigationURL(url)
+    }
+
+    private func startAccessingAuthorizedRoot(containing url: URL) {
+        guard url.isFileURL, let root = rootStore.root(containing: url) else {
+            return
+        }
+
+        _ = rootStore.startAccessing(root)
+    }
+
+    private func revealAuthorizedFile(_ root: AuthorizedRoot) {
+        guard !root.isDirectory else {
+            return
+        }
+
+        let parent = root.url.deletingLastPathComponent()
+        if state.currentURL == parent {
+            state.selectedURLs = [root.url]
+            loadCurrentDirectory()
+        }
     }
 }
 

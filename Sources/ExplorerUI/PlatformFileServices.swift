@@ -171,6 +171,16 @@ enum PlatformFileServices {
         #endif
     }
 
+    static func openFullDiskAccessSettings() {
+        #if os(macOS)
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") else {
+            return
+        }
+
+        NSWorkspace.shared.open(url)
+        #endif
+    }
+
     #if os(iOS)
     private static func present(_ controller: UIViewController) {
         guard let presenter = topViewController() else {

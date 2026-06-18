@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 struct PlacesSidebar: View {
     @ObservedObject var controller: ExplorerController
-    @State private var isChoosingFolder = false
+    @State private var accessPicker: AccessPicker?
     @State private var detailsTarget: FileItem?
     @State private var places = DefaultPlaces.primaryPlaces()
 
@@ -19,15 +19,7 @@ struct PlacesSidebar: View {
             if !controller.authorizedRoots.isEmpty {
                 Section("Authorized") {
                     ForEach(controller.authorizedRoots) { root in
-                        placeRow(
-                            title: root.title,
-                            symbol: "folder.badge.person.crop",
-                            target: .directory(root.url),
-                            isAuthorized: true,
-                            onRemove: {
-                                controller.removeAuthorizedRoot(root)
-                            }
-                        )
+                        authorizedRootRow(root)
                     }
                 }
             }
@@ -42,20 +34,28 @@ struct PlacesSidebar: View {
             reloadPlaces()
         }
         .fileImporter(
-            isPresented: $isChoosingFolder,
-            allowedContentTypes: [.folder],
+            isPresented: accessPickerBinding,
+            allowedContentTypes: accessPicker?.allowedContentTypes ?? [.folder],
             allowsMultipleSelection: false
         ) { result in
+            defer {
+                accessPicker = nil
+            }
+
             switch result {
             case .success(let urls):
                 guard let url = urls.first else {
                     return
                 }
 
-                controller.addAuthorizedRoot(url)
-                controller.navigate(to: url)
+                let root = controller.addAuthorizedRoot(url)
+                if root.isDirectory {
+                    controller.navigate(to: root.url)
+                }
             case .failure(let error):
-                controller.present(error)
+                if !isUserCancelled(error) {
+                    controller.present(error)
+                }
             }
         }
         .sheet(item: $detailsTarget) { item in
@@ -78,14 +78,87 @@ struct PlacesSidebar: View {
         )
     }
 
-    private var addFolderRow: some View {
-        Label("Add Folder...", systemImage: "folder.badge.plus")
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                isChoosingFolder = true
+    private var accessPickerBinding: Binding<Bool> {
+        Binding(
+            get: { accessPicker != nil },
+            set: { isPresented in
+                if !isPresented {
+                    accessPicker = nil
+                }
             }
-            .accessibilityAddTraits(.isButton)
+        )
+    }
+
+    private var addFolderRow: some View {
+        Group {
+            Button {
+                accessPicker = .folder
+            } label: {
+                Label("Add Folder...", systemImage: "folder.badge.plus")
+            }
+
+            Button {
+                accessPicker = .file
+            } label: {
+                Label("Add File...", systemImage: "doc.badge.plus")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func authorizedRootRow(_ root: AuthorizedRoot) -> some View {
+        if root.isDirectory {
+            placeRow(
+                title: root.title,
+                symbol: root.kind.systemImageName,
+                target: .directory(root.url),
+                isAuthorized: true,
+                onRemove: {
+                    controller.removeAuthorizedRoot(root)
+                }
+            )
+        } else {
+            authorizedFileRow(root)
+        }
+    }
+
+    private func authorizedFileRow(_ root: AuthorizedRoot) -> some View {
+        Button {
+            openAuthorizedFile(root)
+        } label: {
+            Label(root.title, systemImage: root.kind.systemImageName)
+        }
+        .contextMenu {
+            Button("Open", systemImage: "arrow.up.forward.app") {
+                openAuthorizedFile(root)
+            }
+
+            Button("Quick Look", systemImage: "eye") {
+                if controller.startAccessing(root) {
+                    PlatformFileServices.quickLookItems([root.url])
+                }
+            }
+
+            Button("Get Info", systemImage: "info.circle") {
+                detailsTarget = fileItem(for: root.url)
+            }
+
+            Button("Copy Path", systemImage: "doc.on.doc") {
+                PlatformFileServices.copyTextToPasteboard(root.url.path)
+            }
+
+            #if os(macOS)
+            Button("Reveal in Finder", systemImage: "finder") {
+                PlatformFileServices.reveal(root.url)
+            }
+            #endif
+
+            Divider()
+
+            Button("Remove from Sidebar", systemImage: "minus.circle", role: .destructive) {
+                controller.removeAuthorizedRoot(root)
+            }
+        }
     }
 
     private func placeRow(
@@ -188,12 +261,22 @@ struct PlacesSidebar: View {
         controller.navigate(to: url)
     }
 
+    private func openAuthorizedFile(_ root: AuthorizedRoot) {
+        guard controller.startAccessing(root) else {
+            controller.present(ExplorerError.permissionDenied(root.url))
+            return
+        }
+
+        PlatformFileServices.open(root.url)
+    }
+
     private func navigationURL(forSidebarSelection selectionID: String) -> URL? {
         if let place = places.first(where: { sidebarSelectionID(for: $0.target) == selectionID }) {
             return place.target.navigationURL
         }
 
         return controller.authorizedRoots
+            .filter(\.isDirectory)
             .map { $0.url.standardizedFileURL }
             .first { $0.absoluteString == selectionID }
     }
@@ -212,7 +295,7 @@ struct PlacesSidebar: View {
         }
         let authorizedCandidates: [(id: String, fileURL: URL?)] = controller.authorizedRoots.map { root in
             let standardizedURL = root.url.standardizedFileURL
-            return (standardizedURL.absoluteString, standardizedURL)
+            return (standardizedURL.absoluteString, root.isDirectory ? standardizedURL : nil)
         }
         let candidates = placeCandidates + authorizedCandidates
         let currentPath = url.standardizedFileURL.path
@@ -234,5 +317,37 @@ struct PlacesSidebar: View {
                 left.1.path.count < right.1.path.count
             }?
             .0
+    }
+
+    private func fileItem(for url: URL) -> FileItem {
+        (try? FileItem.make(url: url)) ?? FileItem.fallback(url: url)
+    }
+
+    private func isUserCancelled(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError
+    }
+}
+
+private enum AccessPicker: Identifiable {
+    case folder
+    case file
+
+    var id: String {
+        switch self {
+        case .folder:
+            return "folder"
+        case .file:
+            return "file"
+        }
+    }
+
+    var allowedContentTypes: [UTType] {
+        switch self {
+        case .folder:
+            return [.folder]
+        case .file:
+            return [.item]
+        }
     }
 }
