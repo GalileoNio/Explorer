@@ -195,27 +195,71 @@ struct FileListView: View {
     let onTransfer: (TransferRequest) -> Void
 
     var body: some View {
-        GeometryReader { proxy in
-            ScrollView(.horizontal) {
-                List(selection: selection) {
-                    Section {
-                        ForEach(items) { item in
-                            FileListRow(
-                                item: item,
-                                iconSize: listIconSize,
-                                controller: controller,
-                                onRename: onRename,
-                                onDetails: onDetails,
-                                onTransfer: onTransfer
-                            )
-                            .tag(item.url)
-                        }
-                    } header: {
-                        FileListHeader()
-                    }
+        Table(of: FileItem.self, selection: selection) {
+            TableColumn("Name") { item in
+                tableCell(for: item) {
+                    FileListNameCell(item: item, iconSize: listIconSize)
                 }
-                .listStyle(.plain)
-                .frame(width: max(proxy.size.width, FileListColumns.totalWidth), height: proxy.size.height)
+            }
+            .width(min: 180, ideal: 300, max: 520)
+
+            TableColumn("Modified") { item in
+                tableCell(for: item) {
+                    Text(Self.dateText(item.modifiedAt))
+                        .lineLimit(1)
+                }
+            }
+            .width(min: 110, ideal: 138)
+
+            TableColumn("Created") { item in
+                tableCell(for: item) {
+                    Text(Self.dateText(item.createdAt))
+                        .lineLimit(1)
+                }
+            }
+            .width(min: 110, ideal: 138)
+
+            TableColumn("Size") { item in
+                tableCell(for: item) {
+                    Text(item.formattedSize)
+                        .lineLimit(1)
+                        .monospacedDigit()
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
+            .width(min: 72, ideal: 88)
+
+            TableColumn("Kind") { item in
+                tableCell(for: item) {
+                    Text(item.displayType)
+                        .lineLimit(1)
+                }
+            }
+            .width(min: 120, ideal: 154)
+
+            TableColumn("Extension") { item in
+                tableCell(for: item) {
+                    Text(extensionText(for: item))
+                        .lineLimit(1)
+                }
+            }
+            .width(min: 72, ideal: 88)
+        } rows: {
+            ForEach(items) { item in
+                TableRow(item)
+                    .contextMenu {
+                        FileActionMenu(
+                            item: item,
+                            selectedItems: controller.selectedItems(containing: item),
+                            controller: controller,
+                            onRename: onRename,
+                            onDetails: onDetails,
+                            onTransfer: onTransfer
+                        )
+                    }
+                    .itemProvider {
+                        NSItemProvider(object: item.url as NSURL)
+                    }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -231,111 +275,17 @@ struct FileListView: View {
             set: { controller.setSelectedURLs($0) }
         )
     }
-}
 
-private enum FileListColumns {
-    static let name: CGFloat = 300
-    static let modified: CGFloat = 138
-    static let created: CGFloat = 138
-    static let size: CGFloat = 88
-    static let kind: CGFloat = 154
-    static let fileExtension: CGFloat = 78
-    static let totalWidth = name + modified + created + size + kind + fileExtension + 12 * 5 + 20
-}
-
-struct FileListHeader: View {
-    var body: some View {
-        HStack(spacing: 12) {
-            Text("Name")
-                .frame(width: FileListColumns.name, alignment: .leading)
-            Text("Modified")
-                .frame(width: FileListColumns.modified, alignment: .leading)
-            Text("Created")
-                .frame(width: FileListColumns.created, alignment: .leading)
-            Text("Size")
-                .frame(width: FileListColumns.size, alignment: .trailing)
-            Text("Kind")
-                .frame(width: FileListColumns.kind, alignment: .leading)
-            Text("Extension")
-                .frame(width: FileListColumns.fileExtension, alignment: .leading)
-        }
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.regularMaterial)
-    }
-}
-
-struct FileListRow: View {
-    let item: FileItem
-    let iconSize: CGFloat
-    let controller: ExplorerController
-    let onRename: (FileItem) -> Void
-    let onDetails: (FileItem) -> Void
-    let onTransfer: (TransferRequest) -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 8) {
-                FileIconView(item: item, size: iconSize)
-                Text(item.name)
-                    .lineLimit(1)
-                if item.isHidden {
-                    Image(systemName: "eye.slash")
-                        .imageScale(.small)
-                        .foregroundStyle(.tertiary)
-                        .help("Hidden")
-                }
-                if item.kind == .symbolicLink {
-                    Image(systemName: "arrowshape.turn.up.right")
-                        .imageScale(.small)
-                        .foregroundStyle(.tertiary)
-                        .help("Symbolic Link")
-                }
+    @ViewBuilder
+    private func tableCell<Content: View>(
+        for item: FileItem,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        content()
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                openOrNavigate(item)
             }
-            .frame(width: FileListColumns.name, alignment: .leading)
-
-            Text(Self.dateText(item.modifiedAt))
-                .lineLimit(1)
-                .frame(width: FileListColumns.modified, alignment: .leading)
-
-            Text(Self.dateText(item.createdAt))
-                .lineLimit(1)
-                .frame(width: FileListColumns.created, alignment: .leading)
-
-            Text(item.formattedSize)
-                .lineLimit(1)
-                .frame(width: FileListColumns.size, alignment: .trailing)
-
-            Text(item.displayType)
-                .lineLimit(1)
-                .frame(width: FileListColumns.kind, alignment: .leading)
-
-            Text(extensionText)
-                .lineLimit(1)
-                .frame(width: FileListColumns.fileExtension, alignment: .leading)
-        }
-        .font(.subheadline)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .contentShape(Rectangle())
-        .simultaneousGesture(TapGesture(count: 2).onEnded {
-            openOrNavigate(item)
-        })
-        .contextMenu {
-            FileActionMenu(
-                item: item,
-                selectedItems: controller.selectedItems(containing: item),
-                controller: controller,
-                onRename: onRename,
-                onDetails: onDetails,
-                onTransfer: onTransfer
-            )
-        }
-        .onDrag {
-            NSItemProvider(object: item.url as NSURL)
-        }
     }
 
     private static let dateFormatter: DateFormatter = {
@@ -349,7 +299,7 @@ struct FileListRow: View {
         date.map(Self.dateFormatter.string(from:)) ?? "--"
     }
 
-    private var extensionText: String {
+    private func extensionText(for item: FileItem) -> String {
         let pathExtension = item.url.pathExtension
         return pathExtension.isEmpty ? "--" : ".\(pathExtension.lowercased())"
     }
@@ -359,6 +309,31 @@ struct FileListRow: View {
             controller.navigate(to: item.url)
         } else {
             PlatformFileServices.open(item.url)
+        }
+    }
+}
+
+struct FileListNameCell: View {
+    let item: FileItem
+    let iconSize: CGFloat
+
+    var body: some View {
+        HStack(spacing: 8) {
+            FileIconView(item: item, size: iconSize)
+            Text(item.name)
+                .lineLimit(1)
+            if item.isHidden {
+                Image(systemName: "eye.slash")
+                    .imageScale(.small)
+                    .foregroundStyle(.tertiary)
+                    .help("Hidden")
+            }
+            if item.kind == .symbolicLink {
+                Image(systemName: "arrowshape.turn.up.right")
+                    .imageScale(.small)
+                    .foregroundStyle(.tertiary)
+                    .help("Symbolic Link")
+            }
         }
     }
 }
@@ -541,41 +516,40 @@ struct FileInfoSheet: View {
                     ProgressView("Loading Info")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let details {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 18) {
+                    Form {
+                        Section {
                             header(details)
+                        }
 
-                            DetailSection("General") {
-                                DetailRow("Kind", details.displayType)
-                                DetailRow("Size", details.formattedSize)
-                                DetailRow("Allocated", details.formattedAllocatedSize)
-                                DetailRow("Extension", details.pathExtension)
-                                DetailRow("Location", details.location)
-                                DetailRow("Path", details.url.path)
-                                if let typeIdentifier = details.typeIdentifier {
-                                    DetailRow("Type Identifier", typeIdentifier)
-                                }
-                            }
-
-                            DetailSection("Dates") {
-                                DetailRow("Created", Self.dateText(details.createdAt))
-                                DetailRow("Modified", Self.dateText(details.modifiedAt))
-                                DetailRow("Last Opened", Self.dateText(details.accessedAt))
-                            }
-
-                            DetailSection("Access") {
-                                DetailRow("Readable", Self.booleanText(details.isReadable))
-                                DetailRow("Writable", Self.booleanText(details.isWritable))
-                                DetailRow("Executable", Self.booleanText(details.isExecutable))
-                                DetailRow("Hidden", Self.booleanText(details.isHidden))
-                                DetailRow("Owner", details.ownerAccountName ?? "--")
-                                DetailRow("Group", details.groupOwnerAccountName ?? "--")
-                                DetailRow("POSIX", details.formattedPOSIXPermissions)
+                        Section("General") {
+                            detailRow("Kind", details.displayType)
+                            detailRow("Size", details.formattedSize)
+                            detailRow("Allocated", details.formattedAllocatedSize)
+                            detailRow("Extension", details.pathExtension)
+                            detailRow("Location", details.location)
+                            detailRow("Path", details.url.path)
+                            if let typeIdentifier = details.typeIdentifier {
+                                detailRow("Type Identifier", typeIdentifier)
                             }
                         }
-                        .padding(20)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Section("Dates") {
+                            detailRow("Created", Self.dateText(details.createdAt))
+                            detailRow("Modified", Self.dateText(details.modifiedAt))
+                            detailRow("Last Opened", Self.dateText(details.accessedAt))
+                        }
+
+                        Section("Access") {
+                            detailRow("Readable", Self.booleanText(details.isReadable))
+                            detailRow("Writable", Self.booleanText(details.isWritable))
+                            detailRow("Executable", Self.booleanText(details.isExecutable))
+                            detailRow("Hidden", Self.booleanText(details.isHidden))
+                            detailRow("Owner", details.ownerAccountName ?? "--")
+                            detailRow("Group", details.groupOwnerAccountName ?? "--")
+                            detailRow("POSIX", details.formattedPOSIXPermissions)
+                        }
                     }
+                    .formStyle(.grouped)
                 } else {
                     ContentUnavailableView(
                         "Unable to Load Info",
@@ -620,6 +594,14 @@ struct FileInfoSheet: View {
         }
     }
 
+    private func detailRow(_ label: String, _ value: String, lineLimit: Int = 4) -> some View {
+        LabeledContent(label) {
+            Text(value)
+                .textSelection(.enabled)
+                .lineLimit(lineLimit)
+        }
+    }
+
     @MainActor
     private func loadDetails() async {
         isLoading = true
@@ -652,49 +634,5 @@ struct FileInfoSheet: View {
 
     private static func booleanText(_ value: Bool) -> String {
         value ? "Yes" : "No"
-    }
-}
-
-private struct DetailSection<Content: View>: View {
-    let title: String
-    let content: Content
-
-    init(_ title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-
-            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 7) {
-                content
-            }
-        }
-    }
-}
-
-private struct DetailRow: View {
-    let label: String
-    let value: String
-
-    init(_ label: String, _ value: String) {
-        self.label = label
-        self.value = value
-    }
-
-    var body: some View {
-        GridRow {
-            Text(label)
-                .foregroundStyle(.secondary)
-                .frame(width: 112, alignment: .leading)
-
-            Text(value)
-                .textSelection(.enabled)
-                .lineLimit(4)
-        }
-        .font(.callout)
     }
 }

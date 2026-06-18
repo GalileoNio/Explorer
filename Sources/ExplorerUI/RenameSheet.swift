@@ -32,7 +32,7 @@ struct RenameSheet: View {
                     onRename(name)
                     dismiss()
                 }
-                .buttonStyle(.glassProminent)
+                .keyboardShortcut(.defaultAction)
                 .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
@@ -40,4 +40,3 @@ struct RenameSheet: View {
         .frame(width: 360)
     }
 }
-
