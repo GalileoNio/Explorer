@@ -6,11 +6,10 @@ struct PlacesSidebar: View {
     @ObservedObject var controller: ExplorerController
     @State private var isChoosingFolder = false
     @State private var detailsTarget: FileItem?
-    @State private var sidebarSelection: String?
     @State private var places = DefaultPlaces.primaryPlaces()
 
     var body: some View {
-        List(selection: $sidebarSelection) {
+        List(selection: sidebarSelection) {
             Section("Places") {
                 ForEach(places) { place in
                     placeRow(place)
@@ -34,21 +33,13 @@ struct PlacesSidebar: View {
             }
 
             Section("Access") {
-                Button {
-                    isChoosingFolder = true
-                } label: {
-                    Label("Add Folder...", systemImage: "folder.badge.plus")
-                }
+                addFolderRow
             }
         }
         .listStyle(.sidebar)
         .navigationTitle("Explorer")
         .onAppear {
             reloadPlaces()
-            syncSidebarSelection()
-        }
-        .onChange(of: controller.state.currentURL) {
-            syncSidebarSelection()
         }
         .fileImporter(
             isPresented: $isChoosingFolder,
@@ -70,6 +61,31 @@ struct PlacesSidebar: View {
         .sheet(item: $detailsTarget) { item in
             FileInfoSheet(item: item, controller: controller)
         }
+    }
+
+    private var sidebarSelection: Binding<String?> {
+        Binding(
+            get: {
+                selectedSidebarPlaceID(for: controller.state.currentURL)
+            },
+            set: { selectionID in
+                guard let selectionID else {
+                    return
+                }
+
+                navigateToSidebarSelection(selectionID)
+            }
+        )
+    }
+
+    private var addFolderRow: some View {
+        Label("Add Folder...", systemImage: "folder.badge.plus")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isChoosingFolder = true
+            }
+            .accessibilityAddTraits(.isButton)
     }
 
     private func placeRow(
@@ -95,12 +111,17 @@ struct PlacesSidebar: View {
         isAuthorized: Bool = false,
         onRemove: (() -> Void)? = nil
     ) -> some View {
-        let selectionID = target.navigationURL.absoluteString
+        let selectionID = sidebarSelectionID(for: target)
 
         return HStack(spacing: 8) {
             Label(title, systemImage: symbol)
-                .foregroundStyle(.primary, .secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        navigate(to: target.navigationURL)
+                    }
+                )
 
             if isEjectable, let fileURL = target.fileURL {
                 Button {
@@ -116,10 +137,6 @@ struct PlacesSidebar: View {
         }
             .tag(selectionID)
             .contentShape(Rectangle())
-            .onTapGesture {
-                sidebarSelection = selectionID
-                controller.navigate(to: target.navigationURL)
-            }
             .contextMenu {
                 PlaceActionMenu(
                     title: title,
@@ -155,17 +172,43 @@ struct PlacesSidebar: View {
         }
     }
 
-    private func syncSidebarSelection() {
-        sidebarSelection = selectedSidebarPlaceID(for: controller.state.currentURL)
+    private func navigateToSidebarSelection(_ selectionID: String) {
+        guard let url = navigationURL(forSidebarSelection: selectionID) else {
+            return
+        }
+
+        navigate(to: url)
+    }
+
+    private func navigate(to url: URL) {
+        guard controller.state.currentURL != url else {
+            return
+        }
+
+        controller.navigate(to: url)
+    }
+
+    private func navigationURL(forSidebarSelection selectionID: String) -> URL? {
+        if let place = places.first(where: { sidebarSelectionID(for: $0.target) == selectionID }) {
+            return place.target.navigationURL
+        }
+
+        return controller.authorizedRoots
+            .map { $0.url.standardizedFileURL }
+            .first { $0.absoluteString == selectionID }
+    }
+
+    private func sidebarSelectionID(for target: PlaceTarget) -> String {
+        target.navigationURL.absoluteString
     }
 
     private func selectedSidebarPlaceID(for url: URL) -> String? {
         if !url.isFileURL {
-            return places.first { $0.target.navigationURL == url }?.id
+            return places.first { $0.target.navigationURL == url }.map { sidebarSelectionID(for: $0.target) }
         }
 
         let placeCandidates: [(id: String, fileURL: URL?)] = places.map { place in
-            (place.id, place.target.fileURL)
+            (sidebarSelectionID(for: place.target), place.target.fileURL)
         }
         let authorizedCandidates: [(id: String, fileURL: URL?)] = controller.authorizedRoots.map { root in
             let standardizedURL = root.url.standardizedFileURL
